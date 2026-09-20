@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { useEffect } from 'react';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Registration from './pages/Registration';
@@ -15,8 +16,29 @@ import PatientList from './pages/PatientList';
 import OfflineQueue from './pages/OfflineQueue';
 import Settings from './pages/Settings';
 import ProtectedRoute from './components/ProtectedRoute';
+import { syncOutbox } from './services/syncService';
 
 function App() {
+  useEffect(() => {
+    // Attempt automatic background sync every 30 seconds
+    const interval = setInterval(() => {
+      if (navigator.onLine) {
+        syncOutbox().catch(console.error);
+      }
+    }, 30000);
+    
+    // Also try immediately when coming online
+    const handleOnline = () => {
+      syncOutbox().catch(console.error);
+    };
+    window.addEventListener('online', handleOnline);
+    
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('online', handleOnline);
+    };
+  }, []);
+
   return (
     <Router>
       <div className="min-h-screen bg-gray-50">

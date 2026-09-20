@@ -1,28 +1,19 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Search, Plus, UserCircle, Activity } from 'lucide-react';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { db } from '../db/db';
 
 export default function PatientList() {
   const navigate = useNavigate();
-  const [patients, setPatients] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    // In a real app, fetch from API. We'll use mock data for the UI upgrade demo.
-    setTimeout(() => {
-      setPatients([
-        { id: '1', first_name: 'Lakshmi', last_name: 'Devi', village_town: 'Guwahati', gender: 'female', age: 62 },
-        { id: '2', first_name: 'Ramesh', last_name: 'Kumar', village_town: 'Tezpur', gender: 'male', age: 58 },
-        { id: '3', first_name: 'Sunita', last_name: 'Boruah', village_town: 'Jorhat', gender: 'female', age: 55 },
-      ]);
-      setIsLoading(false);
-    }, 600);
-  }, []);
+  const patients = useLiveQuery(() => db.patients.toArray()) || [];
+  const isLoading = false;
 
   const filtered = patients.filter(p => 
-    p.first_name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    p.last_name.toLowerCase().includes(searchTerm.toLowerCase())
+    p.village_code.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    p.id.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -77,36 +68,38 @@ export default function PatientList() {
           ) : filtered.length > 0 ? (
             filtered.map((patient, index) => (
               <div 
-                key={patient.id}
-                style={{ animation: `fade-in-up 0.5s ease-out ${index * 0.1}s forwards`, opacity: 0 }}
-                className="group bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-100 hover:shadow-xl hover:border-teal-200 hover:-translate-y-1 transition-all duration-300 flex items-center justify-between cursor-pointer"
+                key={patient.id} 
+                className={`bg-white rounded-2xl shadow-sm border border-slate-100 p-4 sm:p-5 flex items-center hover:bg-slate-50 transition-colors cursor-pointer group animate-fade-in-up`}
+                style={{ animationDelay: `${index * 50}ms` }}
+                onClick={() => navigate('/dashboard')}
               >
-                <div className="flex items-center space-x-4">
-                  <div className="h-12 w-12 rounded-full bg-gradient-to-tr from-teal-100 to-emerald-50 text-teal-600 flex items-center justify-center font-bold text-lg border border-teal-200/50 group-hover:scale-110 transition-transform">
-                    {patient.first_name[0]}{patient.last_name[0]}
+                <div className="h-12 w-12 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
+                  <UserCircle className="h-6 w-6" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center space-x-3 mb-0.5">
+                    <span className="font-bold text-slate-900 truncate">Village: {patient.village_code}</span>
+                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-slate-100 text-slate-600">
+                      {patient.age_band}
+                    </span>
                   </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-slate-900 group-hover:text-teal-700 transition-colors">
-                      {patient.first_name} {patient.last_name}
-                    </h3>
-                    <p className="text-sm text-slate-500 font-medium">
-                      {patient.age} yrs • {patient.gender} • {patient.village_town}
-                    </p>
+                  <div className="text-sm text-slate-500 font-medium flex items-center">
+                    <span className="capitalize">{patient.sex}</span>
+                    <span className="mx-2">•</span>
+                    <span className="truncate">ID: {patient.id.substring(0, 8)}...</span>
                   </div>
                 </div>
-                <div className="flex items-center space-x-3">
-                  <button className="hidden sm:flex items-center text-teal-600 text-sm font-bold bg-teal-50 px-3 py-1.5 rounded-lg group-hover:bg-teal-100 transition-colors">
-                    <Activity className="h-4 w-4 mr-1.5" /> Start Screening
+                <div className="ml-4">
+                  <button className="h-10 w-10 rounded-full bg-white border border-slate-200 text-slate-400 flex items-center justify-center group-hover:border-teal-500 group-hover:text-teal-600 group-hover:bg-teal-50 transition-all shadow-sm hover:shadow">
+                    <Activity className="h-5 w-5" />
                   </button>
-                  <ChevronLeft className="h-5 w-5 text-slate-300 rotate-180 group-hover:text-teal-500 transition-colors" />
                 </div>
               </div>
             ))
           ) : (
-            <div className="text-center py-12 bg-white rounded-3xl border border-dashed border-slate-300 animate-fade-in">
-              <UserCircle className="h-16 w-16 text-slate-300 mx-auto mb-4" />
-              <h3 className="text-lg font-bold text-slate-900 mb-1">No patients found</h3>
-              <p className="text-slate-500 text-sm">Try adjusting your search term.</p>
+            <div className="p-12 text-center text-slate-500 bg-white rounded-3xl border border-dashed border-slate-300">
+              <UserCircle className="h-12 w-12 mx-auto text-slate-300 mb-3" />
+              <p className="font-medium">No patients found.</p>
             </div>
           )}
         </div>

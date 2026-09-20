@@ -77,3 +77,10 @@ Steps:
 - **Blocked Host:** Ensure `allowedHosts: true` is set in `vite.config.ts`.
 - **Login Failure:** Ensure backend CORS is set to allow `*` (only for local testing).
 - **Camera Permission:** Must use the `https` tunnel link, as browsers block camera access on `http` (except `localhost`).
+
+### 4. Test offline
+To test the offline capabilities of the PWA:
+1. Open the app on your phone via the HTTPS tunnel.
+2. Wait a moment for the service worker to install and cache all assets (including WASM models).
+3. Turn on **Airplane Mode** (disconnect Wi-Fi and Cellular).
+4. Refresh the page or navigate around. The app should continue to work fully offline. You can register patients and perform screenings, which will be queued locally.

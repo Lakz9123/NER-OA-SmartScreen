@@ -1,32 +1,35 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, WifiOff, RefreshCw, CheckCircle, Database } from 'lucide-react';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { db } from '../db/db';
+import { syncOutbox } from '../services/syncService';
 
 export default function OfflineQueue() {
   const navigate = useNavigate();
-  const [queue, setQueue] = useState<any[]>([]);
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncStatus, setSyncStatus] = useState<'idle' | 'success'>('idle');
 
-  useEffect(() => {
-    const savedQueue = localStorage.getItem('offlineQueue');
-    if (savedQueue) {
-      setQueue(JSON.parse(savedQueue));
-    }
-  }, []);
+  const queue = useLiveQuery(() => db.outbox.toArray()) || [];
 
-  const handleSync = () => {
+  const handleSync = async () => {
     setIsSyncing(true);
     setSyncStatus('idle');
     
-    // In a real app, you would loop through queue and POST each item
-    // For now, simulate network sync and clear
-    setTimeout(() => {
+    try {
+      const result = await syncOutbox();
+      if (result.success) {
+        setSyncStatus('success');
+      } else {
+        alert(result.message);
+        setSyncStatus('idle');
+      }
+    } catch (e: any) {
+      alert("Network error. Try again later.");
+      setSyncStatus('idle');
+    } finally {
       setIsSyncing(false);
-      setQueue([]);
-      localStorage.removeItem('offlineQueue');
-      setSyncStatus('success');
-    }, 2500);
+    }
   };
 
   return (
@@ -96,29 +99,23 @@ export default function OfflineQueue() {
               <p className="text-slate-500 font-medium">All records are synced.</p>
             </div>
           ) : (
-            queue.map((item, index) => (
-              <div 
-                key={item.id}
-                style={{ animation: `fade-in-up 0.5s ease-out ${index * 0.1}s forwards`, opacity: 0 }}
-                className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex items-center justify-between hover:shadow-md transition-shadow"
-              >
-                <div className="flex items-center space-x-4">
-                  <div className={`p-3 rounded-xl ${item.type === 'Patient Registration' ? 'bg-blue-50 text-blue-600' : 'bg-teal-50 text-teal-600'}`}>
-                    {item.type === 'Patient Registration' ? <Database className="h-5 w-5" /> : <Database className="h-5 w-5" />}
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-slate-900">{item.type}</h4>
-                    <p className="text-sm font-medium text-slate-500">{item.name}</p>
+            <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden divide-y divide-slate-100">
+              {queue.map((item) => (
+                <div key={item.id} className="p-4 sm:p-5 flex items-center hover:bg-slate-50 transition-colors">
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-3 mb-1">
+                      <span className="font-bold text-slate-900">{item.type}</span>
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-amber-100 text-amber-800">
+                        PENDING
+                      </span>
+                    </div>
+                    <div className="text-sm text-slate-500 font-medium">
+                      {new Date(item.created_at).toLocaleString()}
+                    </div>
                   </div>
                 </div>
-                <div className="text-right">
-                  <span className="text-xs font-bold text-amber-500 bg-amber-50 px-2 py-1 rounded-md border border-amber-200">Pending</span>
-                  <p className="text-xs font-medium text-slate-400 mt-2">
-                    {new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </p>
-                </div>
-              </div>
-            ))
+              ))}
+            </div>
           )}
         </div>
 

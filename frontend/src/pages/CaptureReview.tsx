@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Check, X, RefreshCw, Activity, Cpu, UploadCloud } from 'lucide-react';
+import { X, Activity, Cpu, UploadCloud, RefreshCw, Check } from 'lucide-react';
 import { analyzeRisk } from '../risk/riskModel';
+import { db } from '../db/db';
+import { v4 as uuidv4 } from 'uuid';
 
 export default function CaptureReview() {
   const navigate = useNavigate();
@@ -43,15 +45,29 @@ export default function CaptureReview() {
     try {
       const localRisk = await analyzeRisk(payload);
       
+      const screeningId = uuidv4();
+      const now = new Date().toISOString();
+
       const localResult = {
         ...payload,
-        id: Date.now().toString(), // Temporary ID for Part A
+        id: screeningId,
         risk_level: localRisk.risk_level,
         risk_score: localRisk.risk_score,
         model_version: localRisk.model_version,
         explainability_data: localRisk.explainability_data,
-        timestamp: new Date().toISOString()
+        sync_status: 'pending' as const,
+        created_at: now
       };
+
+      await db.screenings.add(localResult);
+
+      await db.outbox.add({
+        id: uuidv4(),
+        type: 'ScreeningSync',
+        payload: localResult,
+        status: 'pending',
+        created_at: now
+      });
 
       navigate('/analysis', { state: { result: localResult } });
     } catch (err: any) {

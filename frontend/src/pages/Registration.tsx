@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Save, User, MapPin, Briefcase } from 'lucide-react';
-import { registerPatient } from '../api/client';
+import { db } from '../db/db';
+import { v4 as uuidv4 } from 'uuid';
 
 export default function Registration() {
   const navigate = useNavigate();
@@ -21,22 +22,31 @@ export default function Registration() {
     setError('');
     
     try {
-      const payload = { ...formData, consent_flag: true }; // Enforce consent here or on next screen, but next screen handles policy.
-      const response = await registerPatient(payload);
-      navigate('/consent', { state: { patientId: response.id || 'demo' } });
-    } catch {
-      const offlineId = 'offline-' + Date.now();
-      const offlineQueue = JSON.parse(localStorage.getItem('offlineQueue') || '[]');
-      offlineQueue.push({
-        id: Date.now().toString(),
-        type: 'Patient Registration',
-        name: `Patient (Offline)`,
-        timestamp: new Date().toISOString(),
-        payload: { ...formData, id: offlineId }
-      });
-      localStorage.setItem('offlineQueue', JSON.stringify(offlineQueue));
+      const patientId = uuidv4();
+      const now = new Date().toISOString();
+      const patientData = {
+        id: patientId,
+        age_band: formData.age_band,
+        sex: formData.sex,
+        village_code: formData.village_code,
+        consent_flag: true,
+        sync_status: 'pending' as const,
+        created_at: now
+      };
+
+      await db.patients.add(patientData);
       
-      navigate('/consent', { state: { patientId: offlineId } });
+      await db.outbox.add({
+        id: uuidv4(),
+        type: 'PatientSync',
+        payload: patientData,
+        status: 'pending',
+        created_at: now
+      });
+      
+      navigate('/consent', { state: { patientId } });
+    } catch (err: any) {
+      setError("Failed to save patient locally: " + err.message);
     } finally {
       setIsLoading(false);
     }

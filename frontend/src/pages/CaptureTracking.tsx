@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { PoseLandmarker, FilesetResolver, DrawingUtils } from '@mediapipe/tasks-vision';
-import { X, Activity, Scan, AlertTriangle } from 'lucide-react';
+import { X, Activity, Scan, AlertTriangle, RefreshCw } from 'lucide-react';
 import { KinematicsTracker } from '../utils/kinematics';
 import type { Landmark } from '../utils/kinematics';
 
@@ -18,6 +18,7 @@ export default function CaptureTracking() {
   const [isRecording, setIsRecording] = useState(false);
   const [progress, setProgress] = useState(0);
   const [modelError, setModelError] = useState('');
+  const [retryTrigger, setRetryTrigger] = useState(0);
 
   const trackerRef = useRef<KinematicsTracker>(new KinematicsTracker());
   const isRecordingRef = useRef(false);
@@ -31,9 +32,9 @@ export default function CaptureTracking() {
       try {
         let stream: MediaStream;
         try {
-          // Try to get environment camera first (rear camera)
+          // Try to get environment camera first (rear camera) - Lower resolution for performance
           stream = await navigator.mediaDevices.getUserMedia({ 
-            video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } } 
+            video: { facingMode: { ideal: 'environment' }, width: { ideal: 640 }, height: { ideal: 480 } } 
           });
         } catch (camErr) {
           console.warn("Could not get environment camera, falling back to default:", camErr);
@@ -51,23 +52,41 @@ export default function CaptureTracking() {
           }
         }
 
-        const vision = await FilesetResolver.forVisionTasks(
-          "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm"
-        );
+        const vision = await FilesetResolver.forVisionTasks("/mediapipe/wasm");
 
-        poseLandmarker = await PoseLandmarker.createFromOptions(vision, {
+        let poseLandmarkerConfig: any = {
           baseOptions: {
-            modelAssetPath: "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task",
+            modelAssetPath: "/mediapipe/pose_landmarker_lite.task",
             delegate: "GPU"
           },
           runningMode: "VIDEO",
           numPoses: 1
-        });
+        };
 
+        try {
+          poseLandmarker = await PoseLandmarker.createFromOptions(vision, poseLandmarkerConfig);
+        } catch (gpuError) {
+          console.warn("GPU delegate failed, falling back to CPU", gpuError);
+          poseLandmarkerConfig.baseOptions.delegate = "CPU";
+          poseLandmarker = await PoseLandmarker.createFromOptions(vision, poseLandmarkerConfig);
+        }
+
+        setModelError('');
         setIsInitializing(false);
 
-        // Rendering loop
-        const renderLoop = async () => {
+        // Rendering loop with FPS throttling for mobile performance
+        let lastFrameTime = 0;
+        const TARGET_FPS = 15;
+        const frameInterval = 1000 / TARGET_FPS;
+
+        const renderLoop = async (timestamp: number) => {
+          // Throttle FPS to prevent UI blocking on mobile
+          if (timestamp - lastFrameTime < frameInterval) {
+            animationFrameId = requestAnimationFrame(renderLoop);
+            return;
+          }
+          lastFrameTime = timestamp;
+
           if (videoRef.current && canvasRef.current && poseLandmarker) {
             const video = videoRef.current;
             const canvas = canvasRef.current;
@@ -100,7 +119,7 @@ export default function CaptureTracking() {
           animationFrameId = requestAnimationFrame(renderLoop);
         };
         
-        renderLoop();
+        renderLoop(performance.now());
         
       } catch (err: any) {
         console.error(err);
@@ -118,7 +137,7 @@ export default function CaptureTracking() {
         streamRef.current.getTracks().forEach(track => track.stop());
       }
     };
-  }, []);
+  }, [retryTrigger]);
 
   const handleStartRecording = () => {
     setIsRecording(true);
@@ -188,7 +207,13 @@ export default function CaptureTracking() {
           <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-slate-950/90 p-6 text-center">
             <AlertTriangle className="h-16 w-16 text-rose-500 mb-4" />
             <p className="text-white font-bold text-lg mb-2">System Error</p>
-            <p className="text-slate-400 max-w-md">{modelError}</p>
+            <p className="text-slate-400 max-w-md mb-6">{modelError}</p>
+            <button 
+              onClick={() => { setModelError(''); setIsInitializing(true); setRetryTrigger(prev => prev + 1); }}
+              className="flex items-center px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition-colors border border-slate-700"
+            >
+              <RefreshCw className="h-4 w-4 mr-2" /> Retry Connection
+            </button>
           </div>
         )}
 

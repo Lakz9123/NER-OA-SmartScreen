@@ -61,14 +61,35 @@ export async function createScreening(data: any) {
 
 export async function getMe() {
   const token = localStorage.getItem('token');
-  if (!token) throw new Error('No token');
-  const response = await fetch(`${API_BASE_URL}/auth/me`, {
-    headers: {
-      'Authorization': `Bearer ${token}`
+  if (!token) throw new Error('Unauthorized');
+  
+  try {
+    const response = await fetch(`${API_BASE_URL}/auth/me`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
+    if (response.status === 401) {
+      throw new Error('Unauthorized');
     }
-  });
-  if (!response.ok) {
-    throw new Error('Failed to fetch user');
+    
+    if (!response.ok) {
+      throw new Error('Server error');
+    }
+    
+    const user = await response.json();
+    localStorage.setItem('user', JSON.stringify(user));
+    return user;
+  } catch (error: any) {
+    if (error.message === 'Unauthorized') {
+      throw error;
+    }
+    // Network error or server error: fallback to cached user
+    const cachedUser = localStorage.getItem('user');
+    if (cachedUser) {
+      return JSON.parse(cachedUser);
+    }
+    return { username: 'Offline User', role: 'hw' };
   }
-  return response.json();
 }

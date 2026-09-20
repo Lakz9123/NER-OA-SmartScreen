@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .core.config import settings
-from .routers import auth, patients, screenings
+from .routers import auth, patients, screenings, sync
 from .models.base import Base
 from .core.database import engine
 
@@ -21,6 +21,7 @@ app.add_middleware(
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(patients.router, prefix="/patients", tags=["patients"])
 app.include_router(screenings.router, prefix="/screenings", tags=["screenings"])
+app.include_router(sync.router, prefix="/sync", tags=["sync"])
 
 @app.get("/")
 def root():
