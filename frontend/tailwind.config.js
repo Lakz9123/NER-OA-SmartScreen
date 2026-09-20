@@ -23,6 +23,9 @@ export default {
       },
       fontFamily: {
         sans: ['Outfit', 'sans-serif'],
+        hi: ['"Noto Sans Devanagari"', 'sans-serif'],
+        as: ['"Noto Sans Bengali"', 'sans-serif'],
+        mni: ['"Noto Sans Meetei Mayek"', 'sans-serif'],
       },
       keyframes: {
         'fade-in-up': {

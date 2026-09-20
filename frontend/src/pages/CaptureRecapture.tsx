@@ -1,8 +1,10 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import { AlertOctagon, RefreshCw, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export default function CaptureRecapture() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const location = useLocation();
   const { patientId, answers, reason } = location.state || { 
     patientId: 'demo', 
@@ -26,7 +28,7 @@ export default function CaptureRecapture() {
             <X className="h-6 w-6" />
           </button>
           <div className="flex-1">
-            <h1 className="text-xl font-extrabold text-white tracking-tight">Capture Failed</h1>
+            <h1 className="text-xl font-extrabold text-white tracking-tight">{t('capture_failed', 'Capture Failed')}</h1>
           </div>
         </div>
       </header>
@@ -37,10 +39,10 @@ export default function CaptureRecapture() {
           <AlertOctagon className="h-12 w-12" strokeWidth={2} />
         </div>
         
-        <h2 className="text-3xl font-black text-white mb-4">Poor Video Quality</h2>
+        <h2 className="text-3xl font-black text-white mb-4">{t('poor_video_quality', 'Poor Video Quality')}</h2>
         
         <p className="text-slate-400 font-medium text-lg mb-8 max-w-sm">
-          We couldn't extract reliable kinematics from this video because:
+          {t('capture_failed_reason_intro', "We couldn't extract reliable kinematics from this video because:")}
         </p>
 
         <div className="bg-rose-950/40 border border-rose-900/50 p-6 rounded-2xl w-full max-w-sm mb-10">
@@ -52,7 +54,7 @@ export default function CaptureRecapture() {
           className="flex w-full max-w-sm items-center justify-center rounded-2xl bg-teal-600 py-5 px-4 text-base font-bold text-white shadow-[0_0_20px_rgba(13,148,136,0.3)] hover:bg-teal-500 hover:shadow-[0_0_30px_rgba(20,184,166,0.5)] focus:outline-none transition-all duration-300"
         >
           <RefreshCw className="h-5 w-5 mr-3" />
-          Retake Video
+          {t('retake_video', 'Retake Video')}
         </button>
 
       </main>

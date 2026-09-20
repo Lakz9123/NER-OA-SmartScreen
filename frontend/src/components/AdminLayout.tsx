@@ -3,8 +3,10 @@ import { Activity, LayoutDashboard, Users, FileText, LogOut } from 'lucide-react
 import { useState, useEffect } from 'react';
 import { getMe } from '../api/client';
 import { logout } from '../utils/auth';
+import { useTranslation } from 'react-i18next';
 
 export default function AdminLayout() {
+  const { t } = useTranslation();
   const location = useLocation();
   const [user, setUser] = useState<any>(null);
 
@@ -22,25 +24,25 @@ export default function AdminLayout() {
         </div>
         
         <div className="p-6">
-          <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Main Menu</div>
+          <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">{t('main_menu', 'Main Menu')}</div>
           <nav className="space-y-2">
             <Link 
               to="/admin/dashboard" 
               className={`flex items-center px-4 py-3 rounded-xl transition-all ${location.pathname === '/admin/dashboard' ? 'bg-teal-600 text-white font-bold' : 'text-slate-300 hover:bg-slate-800 hover:text-white font-medium'}`}
             >
-              <LayoutDashboard className="h-5 w-5 mr-3" /> Dashboard
+              <LayoutDashboard className="h-5 w-5 mr-3" /> {t('dashboard', 'Dashboard')}
             </Link>
             <Link 
               to="/admin/users" 
               className={`flex items-center px-4 py-3 rounded-xl transition-all ${location.pathname.startsWith('/admin/users') ? 'bg-teal-600 text-white font-bold' : 'text-slate-300 hover:bg-slate-800 hover:text-white font-medium'}`}
             >
-              <Users className="h-5 w-5 mr-3" /> Users
+              <Users className="h-5 w-5 mr-3" /> {t('users', 'Users')}
             </Link>
             <Link 
               to="/admin/audit-logs" 
               className={`flex items-center px-4 py-3 rounded-xl transition-all ${location.pathname.startsWith('/admin/audit-logs') ? 'bg-teal-600 text-white font-bold' : 'text-slate-300 hover:bg-slate-800 hover:text-white font-medium'}`}
             >
-              <FileText className="h-5 w-5 mr-3" /> Audit Logs
+              <FileText className="h-5 w-5 mr-3" /> {t('audit_logs', 'Audit Logs')}
             </Link>
           </nav>
         </div>
@@ -52,14 +54,14 @@ export default function AdminLayout() {
             </div>
             <div>
               <p className="text-sm font-bold text-white leading-tight">{user ? user.username : '...'}</p>
-              <p className="text-xs text-teal-400 font-medium">Administrator</p>
+              <p className="text-xs text-teal-400 font-medium">{t('administrator', 'Administrator')}</p>
             </div>
           </div>
           <button 
             onClick={() => logout()}
             className="w-full flex items-center justify-center px-4 py-2.5 bg-rose-500/10 text-rose-400 hover:bg-rose-500 hover:text-white rounded-xl transition-colors text-sm font-bold"
           >
-            <LogOut className="h-4 w-4 mr-2" /> Sign Out
+            <LogOut className="h-4 w-4 mr-2" /> {t('sign_out', 'Sign Out')}
           </button>
         </div>
       </aside>

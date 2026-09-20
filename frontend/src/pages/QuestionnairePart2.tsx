@@ -1,22 +1,24 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Activity } from 'lucide-react';
-
-const activities = [
-  { id: 'stairs', label: 'Going down or up stairs' },
-  { id: 'rising', label: 'Rising from sitting' },
-  { id: 'walking', label: 'Walking on flat surfaces' },
-  { id: 'squatting', label: 'Squatting or bending' },
-];
-
-const difficulties = [
-  { value: 0, label: 'None', color: 'emerald' },
-  { value: 1, label: 'Mild', color: 'blue' },
-  { value: 2, label: 'Moderate', color: 'amber' },
-  { value: 3, label: 'Severe', color: 'rose' },
-];
+import { useTranslation } from 'react-i18next';
 
 export default function QuestionnairePart2() {
+  const { t } = useTranslation();
+
+  const activities = [
+    { id: 'stairs', label: t('womac_stairs', 'Going down or up stairs') },
+    { id: 'rising', label: t('womac_rising', 'Rising from sitting') },
+    { id: 'walking', label: t('womac_walking', 'Walking on flat surfaces') },
+    { id: 'squatting', label: t('womac_squatting', 'Squatting or bending') },
+  ];
+
+  const difficulties = [
+    { value: 0, label: t('womac_none', 'None'), color: 'emerald' },
+    { value: 1, label: t('womac_mild', 'Mild'), color: 'blue' },
+    { value: 2, label: t('womac_moderate', 'Moderate'), color: 'amber' },
+    { value: 3, label: t('womac_severe', 'Severe'), color: 'rose' },
+  ];
   const navigate = useNavigate();
   const location = useLocation();
   const { patientId, answers: prevAnswers } = location.state || { patientId: 'demo', answers: {} };
@@ -46,9 +48,9 @@ export default function QuestionnairePart2() {
             <ChevronLeft className="h-6 w-6" />
           </button>
           <div className="flex-1">
-            <h1 className="text-xl font-extrabold text-slate-800 tracking-tight">Functional Mobility</h1>
+            <h1 className="text-xl font-extrabold text-slate-800 tracking-tight">{t('functional_mobility', 'Functional Mobility')}</h1>
           </div>
-          <div className="text-xs font-bold tracking-widest text-teal-600 uppercase">Step 2 of 3</div>
+          <div className="text-xs font-bold tracking-widest text-teal-600 uppercase">{t('step_2_of_3', 'Step 2 of 3')}</div>
         </div>
         <div className="w-full bg-slate-100 h-1.5">
           <div className="bg-gradient-to-r from-teal-400 to-emerald-500 h-1.5 w-2/3 transition-all duration-700 ease-out shadow-[0_0_10px_rgba(20,184,166,0.5)]"></div>
@@ -61,9 +63,9 @@ export default function QuestionnairePart2() {
           <div className="inline-flex items-center justify-center p-4 bg-teal-50 text-teal-600 rounded-full mb-4">
             <Activity className="h-8 w-8" />
           </div>
-          <h2 className="text-2xl font-black text-slate-900 mb-2">WOMAC Assessment</h2>
+          <h2 className="text-2xl font-black text-slate-900 mb-2">{t('womac_assessment', 'WOMAC Assessment')}</h2>
           <p className="text-slate-500 font-medium max-w-md mx-auto">
-            Rate the degree of difficulty the patient experienced with the following activities in the past 48 hours.
+            {t('womac_assessment_desc', 'Rate the degree of difficulty the patient experienced with the following activities in the past 48 hours.')}
           </p>
         </div>
 
@@ -109,7 +111,7 @@ export default function QuestionnairePart2() {
             disabled={!isFormComplete}
             className="flex items-center justify-center rounded-2xl bg-slate-900 py-4 px-8 text-base font-bold text-white shadow-xl shadow-slate-900/20 hover:bg-teal-700 hover:shadow-teal-700/30 focus:outline-none focus:ring-2 focus:ring-teal-600 focus:ring-offset-2 transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed group w-full sm:w-auto"
           >
-            Continue to Step 3
+            {t('continue_to_step', 'Continue to Step {{step}}', { step: 3 })}
             <ChevronRight className="h-5 w-5 ml-3 group-hover:translate-x-1 transition-transform" />
           </button>
         </div>

@@ -3,8 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Save, User, MapPin, Briefcase } from 'lucide-react';
 import { db } from '../db/db';
 import { v4 as uuidv4 } from 'uuid';
+import { useTranslation } from 'react-i18next';
 
 export default function Registration() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     age_band: '50-59',
@@ -74,7 +76,7 @@ export default function Registration() {
           <button onClick={() => navigate('/dashboard')} className="mr-4 p-2 -ml-2 rounded-xl text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-all">
             <ChevronLeft className="h-6 w-6" />
           </button>
-          <h1 className="text-xl font-extrabold text-slate-800 tracking-tight">Register Patient</h1>
+          <h1 className="text-xl font-extrabold text-slate-800 tracking-tight">{t('register_patient', 'Register Patient')}</h1>
         </div>
       </header>
 
@@ -83,8 +85,8 @@ export default function Registration() {
           
           <div className="bg-gradient-to-r from-teal-600 to-emerald-500 px-8 py-10 text-white relative overflow-hidden">
             <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4"></div>
-            <h2 className="text-2xl font-black mb-2 relative z-10">Patient Enrollment</h2>
-            <p className="text-teal-50 font-medium relative z-10">Enter anonymous demographic details to start a new screening session.</p>
+            <h2 className="text-2xl font-black mb-2 relative z-10">{t('patient_enrollment', 'Patient Enrollment')}</h2>
+            <p className="text-teal-50 font-medium relative z-10">{t('patient_enrollment_desc', 'Enter anonymous demographic details to start a new screening session.')}</p>
           </div>
 
           {error && (
@@ -97,35 +99,35 @@ export default function Registration() {
             
             <div className="animate-fade-in-up-delay-1">
               <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-6 flex items-center">
-                <User className="h-4 w-4 mr-2" /> Demographics
+                <User className="h-4 w-4 mr-2" /> {t('demographics', 'Demographics')}
               </h3>
               <div className="grid gap-6 sm:grid-cols-2">
                 
                 <div className="space-y-1.5">
-                  <label className="block text-sm font-bold text-slate-700 ml-1">Age Band</label>
+                  <label className="block text-sm font-bold text-slate-700 ml-1">{t('age_band', 'Age Band')}</label>
                   <select
                     name="age_band" required
                     className="block w-full rounded-2xl border-0 bg-slate-50 py-4 px-4 text-slate-900 ring-1 ring-inset ring-slate-200 focus:ring-2 focus:ring-inset focus:ring-teal-600 transition-all font-medium appearance-none"
                     value={formData.age_band} onChange={handleChange}
                   >
-                    <option value="30-39">30 - 39 years</option>
-                    <option value="40-49">40 - 49 years</option>
-                    <option value="50-59">50 - 59 years</option>
-                    <option value="60-69">60 - 69 years</option>
-                    <option value="70+">70+ years</option>
+                    <option value="30-39">30 - 39 {t('years', 'years')}</option>
+                    <option value="40-49">40 - 49 {t('years', 'years')}</option>
+                    <option value="50-59">50 - 59 {t('years', 'years')}</option>
+                    <option value="60-69">60 - 69 {t('years', 'years')}</option>
+                    <option value="70+">70+ {t('years', 'years')}</option>
                   </select>
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="block text-sm font-bold text-slate-700 ml-1">Sex</label>
+                  <label className="block text-sm font-bold text-slate-700 ml-1">{t('sex', 'Sex')}</label>
                   <select
                     name="sex" required
                     className="block w-full rounded-2xl border-0 bg-slate-50 py-4 px-4 text-slate-900 ring-1 ring-inset ring-slate-200 focus:ring-2 focus:ring-inset focus:ring-teal-600 transition-all font-medium appearance-none"
                     value={formData.sex} onChange={handleChange}
                   >
-                    <option value="female">Female</option>
-                    <option value="male">Male</option>
-                    <option value="other">Other</option>
+                    <option value="female">{t('female', 'Female')}</option>
+                    <option value="male">{t('male', 'Male')}</option>
+                    <option value="other">{t('other', 'Other')}</option>
                   </select>
                 </div>
 
@@ -134,11 +136,11 @@ export default function Registration() {
 
             <div className="animate-fade-in-up-delay-2">
               <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-6 flex items-center">
-                <MapPin className="h-4 w-4 mr-2" /> Location & Occupation
+                <MapPin className="h-4 w-4 mr-2" /> {t('location_occupation', 'Location & Occupation')}
               </h3>
               <div className="grid gap-6 sm:grid-cols-2">
                 <div className="space-y-1.5">
-                  <label className="block text-sm font-bold text-slate-700 ml-1">Village/Location Code</label>
+                  <label className="block text-sm font-bold text-slate-700 ml-1">{t('village_code', 'Village/Location Code')}</label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none text-slate-400">
                       <MapPin className="h-5 w-5" />
@@ -146,14 +148,14 @@ export default function Registration() {
                     <input
                       type="text" name="village_code" required
                       className="block w-full rounded-2xl border-0 bg-slate-50 py-4 pl-11 pr-4 text-slate-900 ring-1 ring-inset ring-slate-200 focus:ring-2 focus:ring-inset focus:ring-teal-600 transition-all font-medium"
-                      placeholder="e.g. VIL-001"
+                      placeholder={t('village_code_placeholder', 'e.g. VIL-001')}
                       value={formData.village_code} onChange={handleChange}
                     />
                   </div>
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="block text-sm font-bold text-slate-700 ml-1">Primary Occupation</label>
+                  <label className="block text-sm font-bold text-slate-700 ml-1">{t('primary_occupation', 'Primary Occupation')}</label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none text-slate-400">
                       <Briefcase className="h-5 w-5" />
@@ -163,11 +165,11 @@ export default function Registration() {
                       className="block w-full rounded-2xl border-0 bg-slate-50 py-4 pl-11 pr-4 text-slate-900 ring-1 ring-inset ring-slate-200 focus:ring-2 focus:ring-inset focus:ring-teal-600 transition-all font-medium appearance-none"
                       value={formData.occupation_type} onChange={handleChange}
                     >
-                      <option value="agriculture">Agriculture / Farming</option>
-                      <option value="manual_labor">Manual Labor</option>
-                      <option value="sedentary">Sedentary / Office</option>
-                      <option value="household">Household Work</option>
-                      <option value="other">Other</option>
+                      <option value="agriculture">{t('occ_agriculture', 'Agriculture / Farming')}</option>
+                      <option value="manual_labor">{t('occ_manual_labor', 'Manual Labor')}</option>
+                      <option value="sedentary">{t('occ_sedentary', 'Sedentary / Office')}</option>
+                      <option value="household">{t('occ_household', 'Household Work')}</option>
+                      <option value="other">{t('other', 'Other')}</option>
                     </select>
                   </div>
                 </div>
@@ -182,7 +184,7 @@ export default function Registration() {
                 className="flex w-full items-center justify-center rounded-2xl bg-slate-900 py-4 px-4 text-base font-bold text-white shadow-xl shadow-slate-900/20 hover:bg-teal-700 hover:shadow-teal-700/30 focus:outline-none focus:ring-2 focus:ring-teal-600 focus:ring-offset-2 transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed group"
               >
                 <Save className="h-5 w-5 mr-3 group-hover:scale-110 transition-transform" />
-                {isLoading ? 'Processing...' : 'Save & Proceed to Consent'}
+                {isLoading ? t('processing', 'Processing...') : t('save_proceed_consent', 'Save & Proceed to Consent')}
               </button>
             </div>
           </form>

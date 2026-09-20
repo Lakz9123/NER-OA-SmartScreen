@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import api from '../../services/api';
+import { useTranslation } from 'react-i18next';
 
 interface AnalyticsSummary {
   total_screenings: number;
@@ -18,6 +19,7 @@ const COLORS = {
 };
 
 export default function AdminDashboard() {
+  const { t } = useTranslation();
   const [data, setData] = useState<AnalyticsSummary | null>(null);
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -34,7 +36,7 @@ export default function AdminDashboard() {
         setRecentActivity(logsRes.data.items.slice(0, 5));
       } catch (err: any) {
         console.error('Failed to load dashboard data', err);
-        setError('Failed to load dashboard data. Please try again.');
+        setError(t('failed_load_dashboard', 'Failed to load dashboard data. Please try again.'));
       } finally {
         setLoading(false);
       }
@@ -43,11 +45,11 @@ export default function AdminDashboard() {
   }, []);
 
   if (loading) {
-    return <div className="p-8 text-center text-gray-500">Loading dashboard...</div>;
+    return <div className="p-8 text-center text-gray-500">{t('loading_dashboard', 'Loading dashboard...')}</div>;
   }
   
   if (error || !data) {
-    return <div className="p-8 text-center text-red-500">{error || 'Failed to load data.'}</div>;
+    return <div className="p-8 text-center text-red-500">{error || t('failed_load_data', 'Failed to load data.')}</div>;
   }
 
   const riskData = Object.entries(data.screenings_by_risk).map(([name, value]) => ({ name, value }));
@@ -61,24 +63,24 @@ export default function AdminDashboard() {
   return (
     <div className="p-8 max-w-7xl mx-auto">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">System Analytics</h1>
+        <h1 className="text-3xl font-bold text-gray-900">{t('system_analytics', 'System Analytics')}</h1>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <div className="bg-white rounded-xl shadow p-6 border-l-4 border-indigo-500">
-          <p className="text-sm text-gray-500 font-medium uppercase">Total Screenings</p>
+          <p className="text-sm text-gray-500 font-medium uppercase">{t('total_screenings', 'Total Screenings')}</p>
           <p className="text-3xl font-bold text-gray-900 mt-2">{data.total_screenings}</p>
         </div>
         <div className="bg-white rounded-xl shadow p-6 border-l-4 border-blue-500">
-          <p className="text-sm text-gray-500 font-medium uppercase">High Risk</p>
+          <p className="text-sm text-gray-500 font-medium uppercase">{t('high_risk', 'High Risk')}</p>
           <p className="text-3xl font-bold text-gray-900 mt-2">{data.screenings_by_risk['High'] || 0}</p>
         </div>
         <div className="bg-white rounded-xl shadow p-6 border-l-4 border-red-500">
-          <p className="text-sm text-gray-500 font-medium uppercase">Total Referrals</p>
+          <p className="text-sm text-gray-500 font-medium uppercase">{t('total_referrals', 'Total Referrals')}</p>
           <p className="text-3xl font-bold text-gray-900 mt-2">{data.referrals}</p>
         </div>
         <div className="bg-white rounded-xl shadow p-6 border-l-4 border-amber-500">
-          <p className="text-sm text-gray-500 font-medium uppercase">Pending Follow-ups</p>
+          <p className="text-sm text-gray-500 font-medium uppercase">{t('pending_followups', 'Pending Follow-ups')}</p>
           <p className="text-3xl font-bold text-gray-900 mt-2">{data.pending_followups}</p>
         </div>
       </div>
@@ -86,7 +88,7 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Risk Distribution */}
         <div className="bg-white rounded-xl shadow p-6">
-          <h2 className="text-lg font-bold text-gray-900 mb-4">Risk Distribution</h2>
+          <h2 className="text-lg font-bold text-gray-900 mb-4">{t('risk_distribution', 'Risk Distribution')}</h2>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -111,7 +113,7 @@ export default function AdminDashboard() {
             {riskData.map(entry => (
               <div key={entry.name} className="flex items-center">
                 <div className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: COLORS[entry.name as keyof typeof COLORS] || '#9ca3af' }}></div>
-                <span className="text-sm text-gray-600">{entry.name}: {entry.value}</span>
+                <span className="text-sm text-gray-600">{t(entry.name.toLowerCase(), entry.name)}: {entry.value}</span>
               </div>
             ))}
           </div>
@@ -119,7 +121,7 @@ export default function AdminDashboard() {
 
         {/* Screening Trends */}
         <div className="bg-white rounded-xl shadow p-6">
-          <h2 className="text-lg font-bold text-gray-900 mb-4">Screening Activity (Last 30 Days)</h2>
+          <h2 className="text-lg font-bold text-gray-900 mb-4">{t('screening_activity', 'Screening Activity (Last 30 Days)')}</h2>
           <div className="h-64">
             {trendData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
@@ -131,14 +133,14 @@ export default function AdminDashboard() {
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-full flex items-center justify-center text-gray-400">No activity in the last 30 days</div>
+              <div className="h-full flex items-center justify-center text-gray-400">{t('no_activity_30_days', 'No activity in the last 30 days')}</div>
             )}
           </div>
         </div>
 
         {/* Screenings By Village */}
         <div className="bg-white rounded-xl shadow p-6">
-          <h2 className="text-lg font-bold text-gray-900 mb-4">Screenings by Village</h2>
+          <h2 className="text-lg font-bold text-gray-900 mb-4">{t('screenings_by_village', 'Screenings by Village')}</h2>
           <div className="h-64">
             {villageData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
@@ -150,22 +152,22 @@ export default function AdminDashboard() {
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-full flex items-center justify-center text-gray-400">No village data available</div>
+              <div className="h-full flex items-center justify-center text-gray-400">{t('no_village_data', 'No village data available')}</div>
             )}
           </div>
         </div>
 
         {/* Recent Activity Table */}
         <div className="bg-white rounded-xl shadow p-6">
-          <h2 className="text-lg font-bold text-gray-900 mb-4">Recent Activity</h2>
+          <h2 className="text-lg font-bold text-gray-900 mb-4">{t('recent_activity', 'Recent Activity')}</h2>
           <div className="overflow-x-auto">
             {recentActivity.length > 0 ? (
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Action</th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Entity</th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Time</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">{t('action_label', 'Action')}</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">{t('entity_label', 'Entity')}</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">{t('time_label', 'Time')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
@@ -185,7 +187,7 @@ export default function AdminDashboard() {
                 </tbody>
               </table>
             ) : (
-              <div className="text-gray-400 text-center py-4">No recent activity</div>
+              <div className="text-gray-400 text-center py-4">{t('no_recent_activity', 'No recent activity')}</div>
             )}
           </div>
         </div>

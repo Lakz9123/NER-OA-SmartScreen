@@ -23,7 +23,7 @@ describe('auth utilities', () => {
 
   it('logout clears token and user from localStorage', async () => {
     localStorage.setItem('token', 'fake-token');
-    localStorage.setItem('user', JSON.stringify({ id: 'user-a' }));
+    localStorage.setItem('user', JSON.stringify({ id: 123 }));
 
     await logout();
 
@@ -33,7 +33,7 @@ describe('auth utilities', () => {
   });
 
   it('logout attempts sync if online', async () => {
-    localStorage.setItem('user', JSON.stringify({ id: 'user-a' }));
+    localStorage.setItem('user', JSON.stringify({ id: 123 }));
     const syncSpy = vi.spyOn(syncService, 'syncOutbox').mockResolvedValue({ success: true, message: '' });
     
     await logout();
@@ -45,15 +45,16 @@ describe('auth utilities', () => {
     // Offline
     Object.defineProperty(window.navigator, 'onLine', { value: false });
     
-    localStorage.setItem('user', JSON.stringify({ id: 'user-a' }));
+    localStorage.setItem('user', JSON.stringify({ id: 123 }));
     
     // Add pending record
     await db.outbox.add({
-      id: 1,
-      owner_id: 'user-a',
+      id: 'test-outbox-id-1',
+      owner_id: 123,
       type: 'PatientSync',
       payload: {},
-      status: 'pending'
+      status: 'pending',
+      created_at: new Date().toISOString()
     });
 
     await logout();

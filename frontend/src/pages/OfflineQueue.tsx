@@ -4,8 +4,10 @@ import { ChevronLeft, WifiOff, RefreshCw, CheckCircle, Database, AlertCircle } f
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db/db';
 import { syncOutbox } from '../services/syncService';
+import { useTranslation } from 'react-i18next';
 
 export default function OfflineQueue() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncStatus, setSyncStatus] = useState<'idle' | 'success'>('idle');
@@ -32,7 +34,7 @@ export default function OfflineQueue() {
         setSyncStatus('idle');
       }
     } catch (e: any) {
-      setSyncMessage("Network error. Try again later.");
+      setSyncMessage(t('network_error', 'Network error. Try again later.'));
       setSyncStatus('idle');
     } finally {
       setIsSyncing(false);
@@ -52,11 +54,11 @@ export default function OfflineQueue() {
             <ChevronLeft className="h-6 w-6" />
           </button>
           <div className="flex-1">
-            <h1 className="text-xl font-extrabold text-slate-800 tracking-tight">Offline Queue</h1>
+            <h1 className="text-xl font-extrabold text-slate-800 tracking-tight">{t('offline_queue', 'Offline Queue')}</h1>
           </div>
           <div className="flex items-center space-x-2 bg-amber-50 px-3 py-1.5 rounded-full border border-amber-200">
             <WifiOff className="h-4 w-4 text-amber-600" />
-            <span className="text-xs font-bold tracking-widest text-amber-600 uppercase">Local Storage</span>
+            <span className="text-xs font-bold tracking-widest text-amber-600 uppercase">{t('local_storage', 'Local Storage')}</span>
           </div>
         </div>
       </header>
@@ -72,10 +74,10 @@ export default function OfflineQueue() {
           </div>
           
           <h2 className="text-3xl font-black text-slate-900 mb-3 relative z-10">
-            {outbox.length} Pending Records
+            {t('pending_records_count', '{{count}} Pending Records', { count: outbox.length })}
           </h2>
           <p className="text-slate-500 font-medium max-w-md mx-auto relative z-10">
-            Records captured while offline are stored securely on this device. Sync them when you have internet access.
+            {t('offline_queue_desc', 'Records captured while offline are stored securely on this device. Sync them when you have internet access.')}
           </p>
 
           <button
@@ -88,12 +90,12 @@ export default function OfflineQueue() {
             ) : syncStatus === 'success' ? (
               <>
                 <CheckCircle className="h-5 w-5 mr-2 text-emerald-400" />
-                Synced Successfully
+                {t('synced_successfully', 'Synced Successfully')}
               </>
             ) : (
               <>
                 <RefreshCw className="h-5 w-5 mr-3 group-hover:rotate-180 transition-transform duration-500" />
-                Sync Now
+                {t('sync_now', 'Sync Now')}
               </>
             )}
           </button>
@@ -108,13 +110,13 @@ export default function OfflineQueue() {
         {/* Queue List */}
         <div className="space-y-4">
           <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-4 px-2">
-            Queued Items
+            {t('queued_items', 'Queued Items')}
           </h3>
           
           {outbox.length === 0 && syncedPatients.length === 0 && syncedScreenings.length === 0 ? (
             <div className="text-center py-12 bg-white rounded-3xl border border-dashed border-slate-300 animate-fade-in">
               <CheckCircle className="h-12 w-12 text-emerald-400 mx-auto mb-3" />
-              <p className="text-slate-500 font-medium">No records found.</p>
+              <p className="text-slate-500 font-medium">{t('no_records_found', 'No records found.')}</p>
             </div>
           ) : (
             <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden divide-y divide-slate-100">
@@ -127,11 +129,11 @@ export default function OfflineQueue() {
                       <span className="font-bold text-slate-900">{item.type}</span>
                       {item.status === 'pending' || item.status === 'syncing' ? (
                         <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-amber-100 text-amber-800">
-                           PENDING
+                           {t('status_pending', 'PENDING')}
                         </span>
                       ) : (
                         <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-red-100 text-red-800">
-                           FAILED
+                           {t('status_failed', 'FAILED')}
                         </span>
                       )}
                     </div>
@@ -147,7 +149,7 @@ export default function OfflineQueue() {
                   </div>
                   {item.status === 'failed' && (
                     <button onClick={() => retryItem(item.id)} className="ml-4 text-sm font-bold text-blue-600 hover:text-blue-800 underline">
-                      Retry
+                      {t('retry', 'Retry')}
                     </button>
                   )}
                 </div>
@@ -160,7 +162,7 @@ export default function OfflineQueue() {
                     <div className="flex items-center space-x-3 mb-1">
                       <span className="font-bold text-slate-900">PatientSync</span>
                       <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-emerald-100 text-emerald-800">
-                        SYNCED
+                        {t('status_synced', 'SYNCED')}
                       </span>
                     </div>
                     <div className="text-sm text-slate-500 font-medium">
@@ -177,7 +179,7 @@ export default function OfflineQueue() {
                     <div className="flex items-center space-x-3 mb-1">
                       <span className="font-bold text-slate-900">ScreeningSync</span>
                       <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-emerald-100 text-emerald-800">
-                        SYNCED
+                        {t('status_synced', 'SYNCED')}
                       </span>
                     </div>
                     <div className="text-sm text-slate-500 font-medium">

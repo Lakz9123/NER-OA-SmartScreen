@@ -53,7 +53,7 @@ export default defineConfig({
         ]
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,wasm,task,json}'],
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,wasm,task,json,woff2,woff}'],
         globIgnores: ['**/node_modules/**/*', 'sw.js', 'workbox-*.js', '**/*nosimd*.*'],
         maximumFileSizeToCacheInBytes: 15 * 1024 * 1024,
         navigateFallbackDenylist: [/^\/api/],

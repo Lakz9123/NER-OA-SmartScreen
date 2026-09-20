@@ -3,8 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Search, Plus, UserCircle, Activity } from 'lucide-react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db/db';
+import { useTranslation } from 'react-i18next';
 
 export default function PatientList() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -31,14 +33,14 @@ export default function PatientList() {
             <ChevronLeft className="h-6 w-6" />
           </button>
           <div className="flex-1">
-            <h1 className="text-xl font-extrabold text-slate-800 tracking-tight">Patient Directory</h1>
+            <h1 className="text-xl font-extrabold text-slate-800 tracking-tight">{t('patient_directory', 'Patient Directory')}</h1>
           </div>
           <button 
             onClick={() => navigate('/register-patient')}
             className="flex items-center space-x-1 text-white font-bold text-sm bg-teal-600 hover:bg-teal-500 px-3 py-1.5 rounded-lg transition-colors shadow-sm"
           >
             <Plus className="h-4 w-4" />
-            <span className="hidden sm:inline">New Patient</span>
+            <span className="hidden sm:inline">{t('new_patient', 'New Patient')}</span>
           </button>
         </div>
       </header>
@@ -53,7 +55,7 @@ export default function PatientList() {
           <input
             type="text"
             className="block w-full rounded-2xl border-0 bg-white py-4 pl-12 pr-4 text-slate-900 ring-1 ring-inset ring-slate-200 focus:ring-2 focus:ring-inset focus:ring-teal-600 shadow-sm transition-all font-medium"
-            placeholder="Search patients by name..."
+            placeholder={t('search_patients', 'Search patients by name...')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -85,7 +87,7 @@ export default function PatientList() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center space-x-3 mb-0.5">
-                    <span className="font-bold text-slate-900 truncate">Village: {patient.village_code}</span>
+                    <span className="font-bold text-slate-900 truncate">{t('village_label', 'Village:')} {patient.village_code}</span>
                     <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-slate-100 text-slate-600">
                       {patient.age_band}
                     </span>
@@ -114,7 +116,7 @@ export default function PatientList() {
           ) : (
             <div className="p-12 text-center text-slate-500 bg-white rounded-3xl border border-dashed border-slate-300">
               <UserCircle className="h-12 w-12 mx-auto text-slate-300 mb-3" />
-              <p className="font-medium">No patients found.</p>
+              <p className="font-medium">{t('no_patients_found', 'No patients found.')}</p>
             </div>
           )}
         </div>

@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ChevronLeft, Camera, Smartphone, Move, ArrowRight, ScanLine } from 'lucide-react';
+import { useTranslation, Trans } from 'react-i18next';
 
 export default function CaptureSetup() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const { patientId, answers } = location.state || { patientId: 'demo', answers: {} };
@@ -16,7 +18,7 @@ export default function CaptureSetup() {
       stream.getTracks().forEach(track => track.stop());
       setHasPermissions(true);
     } catch {
-      alert("Camera permission is required for the screening.");
+      alert(t('camera_permission_required', 'Camera permission is required for the screening.'));
     }
   };
 
@@ -34,11 +36,11 @@ export default function CaptureSetup() {
             <ChevronLeft className="h-6 w-6" />
           </button>
           <div className="flex-1">
-            <h1 className="text-xl font-extrabold text-white tracking-tight">AI Camera Setup</h1>
+            <h1 className="text-xl font-extrabold text-white tracking-tight">{t('ai_camera_setup', 'AI Camera Setup')}</h1>
           </div>
           <div className="flex items-center space-x-2 bg-teal-900/30 px-3 py-1.5 rounded-full border border-teal-500/20">
             <div className="w-2 h-2 rounded-full bg-teal-400 animate-pulse"></div>
-            <span className="text-xs font-bold tracking-widest text-teal-400 uppercase">System Ready</span>
+            <span className="text-xs font-bold tracking-widest text-teal-400 uppercase">{t('system_ready', 'System Ready')}</span>
           </div>
         </div>
       </header>
@@ -52,9 +54,9 @@ export default function CaptureSetup() {
               <ScanLine className="h-12 w-12 text-teal-400 animate-pulse-glow" />
             </div>
           </div>
-          <h2 className="text-3xl font-black text-white mb-3">Prepare for Capture</h2>
+          <h2 className="text-3xl font-black text-white mb-3">{t('prepare_for_capture', 'Prepare for Capture')}</h2>
           <p className="text-slate-400 font-medium max-w-sm mx-auto">
-            Our edge AI will analyze the patient's gait in real-time. Ensure optimal conditions for accuracy.
+            {t('prepare_for_capture_desc', "Our edge AI will analyze the patient's gait in real-time. Ensure optimal conditions for accuracy.")}
           </p>
         </div>
 
@@ -65,8 +67,12 @@ export default function CaptureSetup() {
               <Smartphone className="h-6 w-6" />
             </div>
             <div>
-              <h3 className="text-white font-bold text-lg mb-1">1. Set Up Phone</h3>
-              <p className="text-slate-400 text-sm leading-relaxed">Put the phone on a stand at <strong>hip height</strong>. Point the camera at the side of the walking path.</p>
+              <h3 className="text-white font-bold text-lg mb-1">{t('setup_step1_title', '1. Set Up Phone')}</h3>
+              <p className="text-slate-400 text-sm leading-relaxed">
+                <Trans i18nKey="setup_step1_desc">
+                  Put the phone on a stand at <strong>hip height</strong>. Point the camera at the side of the walking path.
+                </Trans>
+              </p>
             </div>
           </div>
 
@@ -75,8 +81,12 @@ export default function CaptureSetup() {
               <Move className="h-6 w-6" />
             </div>
             <div>
-              <h3 className="text-white font-bold text-lg mb-1">2. Keep Distance</h3>
-              <p className="text-slate-400 text-sm leading-relaxed">The phone must be <strong>2.5 to 3 meters</strong> away from the patient.</p>
+              <h3 className="text-white font-bold text-lg mb-1">{t('setup_step2_title', '2. Keep Distance')}</h3>
+              <p className="text-slate-400 text-sm leading-relaxed">
+                <Trans i18nKey="setup_step2_desc">
+                  The phone must be <strong>2.5 to 3 meters</strong> away from the patient.
+                </Trans>
+              </p>
             </div>
           </div>
 
@@ -85,8 +95,12 @@ export default function CaptureSetup() {
               <ArrowRight className="h-6 w-6" />
             </div>
             <div>
-              <h3 className="text-white font-bold text-lg mb-1">3. Walk Left to Right</h3>
-              <p className="text-slate-400 text-sm leading-relaxed">The patient must walk <strong>across the screen</strong> (left to right), not towards the camera. Recording takes 10 seconds.</p>
+              <h3 className="text-white font-bold text-lg mb-1">{t('setup_step3_title', '3. Walk Left to Right')}</h3>
+              <p className="text-slate-400 text-sm leading-relaxed">
+                <Trans i18nKey="setup_step3_desc">
+                  The patient must walk <strong>across the screen</strong> (left to right), not towards the camera. Recording takes 10 seconds.
+                </Trans>
+              </p>
             </div>
           </div>
 
@@ -99,7 +113,7 @@ export default function CaptureSetup() {
               className="flex w-full items-center justify-center rounded-2xl bg-slate-800 py-4 px-4 text-base font-bold text-white border border-slate-700 hover:bg-slate-700 focus:outline-none transition-all duration-300"
             >
               <Camera className="h-5 w-5 mr-3 text-slate-400" />
-              Grant Camera Permission
+              {t('grant_camera_permission', 'Grant Camera Permission')}
             </button>
           ) : (
             <button
@@ -108,7 +122,7 @@ export default function CaptureSetup() {
             >
               <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[laser-scan_1.5s_ease-in-out_infinite]"></div>
               <span className="relative z-10 flex items-center">
-                Initialize Edge Engine
+                {t('init_edge_engine', 'Initialize Edge Engine')}
                 <ArrowRight className="h-5 w-5 ml-3 group-hover:translate-x-2 transition-transform" />
               </span>
             </button>

@@ -2,8 +2,10 @@ import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { Home, Users, Settings, Database, Activity } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { getMe } from '../api/client';
+import { useTranslation } from 'react-i18next';
 
 export default function HealthWorkerLayout() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const [user, setUser] = useState<any>(null);
@@ -23,7 +25,7 @@ export default function HealthWorkerLayout() {
             </div>
             <div>
               <span className="block text-sm font-bold text-slate-800 leading-tight">{user ? user.username : '...'}</span>
-              <span className="block text-xs text-slate-500 font-medium">{user?.facility || 'Field Worker'}</span>
+              <span className="block text-xs text-slate-500 font-medium">{user?.facility || t('field_worker', 'Field Worker')}</span>
             </div>
           </div>
           <div className="flex items-center space-x-2">
@@ -31,7 +33,7 @@ export default function HealthWorkerLayout() {
               <span className={`animate-ping absolute inline-flex h-3 w-3 rounded-full opacity-75 ${navigator.onLine ? 'bg-emerald-400' : 'bg-rose-400'}`}></span>
               <span className={`relative inline-flex rounded-full h-3 w-3 ${navigator.onLine ? 'bg-emerald-500' : 'bg-rose-500'}`}></span>
             </span>
-            <span className="text-xs font-bold text-slate-600 uppercase tracking-widest">{navigator.onLine ? 'Online' : 'Offline'}</span>
+            <span className="text-xs font-bold text-slate-600 uppercase tracking-widest">{navigator.onLine ? t('online', 'Online') : t('offline', 'Offline')}</span>
           </div>
         </div>
       </header>
@@ -48,14 +50,14 @@ export default function HealthWorkerLayout() {
           className={`flex flex-col items-center p-2 rounded-xl transition-colors ${location.pathname === '/dashboard' ? 'text-teal-600' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}
         >
           <Home className="h-6 w-6 mb-1" />
-          <span className="text-[10px] font-bold">Home</span>
+          <span className="text-[10px] font-bold">{t('nav_home', 'Home')}</span>
         </button>
         <button 
           onClick={() => navigate('/patients')}
           className={`flex flex-col items-center p-2 rounded-xl transition-colors ${location.pathname.startsWith('/patient') ? 'text-teal-600' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}
         >
           <Users className="h-6 w-6 mb-1" />
-          <span className="text-[10px] font-bold">Patients</span>
+          <span className="text-[10px] font-bold">{t('nav_patients', 'Patients')}</span>
         </button>
         <button 
           onClick={() => navigate('/register-patient')}
@@ -68,14 +70,14 @@ export default function HealthWorkerLayout() {
           className={`flex flex-col items-center p-2 rounded-xl transition-colors ${location.pathname === '/offline-queue' ? 'text-teal-600' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}
         >
           <Database className="h-6 w-6 mb-1" />
-          <span className="text-[10px] font-bold">Queue</span>
+          <span className="text-[10px] font-bold">{t('nav_queue', 'Queue')}</span>
         </button>
         <button 
           onClick={() => navigate('/settings')}
           className={`flex flex-col items-center p-2 rounded-xl transition-colors ${location.pathname === '/settings' ? 'text-teal-600' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}
         >
           <Settings className="h-6 w-6 mb-1" />
-          <span className="text-[10px] font-bold">Settings</span>
+          <span className="text-[10px] font-bold">{t('nav_settings', 'Settings')}</span>
         </button>
       </nav>
     </div>

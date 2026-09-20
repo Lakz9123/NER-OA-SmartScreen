@@ -24,8 +24,20 @@ import { syncOutbox, resetSyncingItems } from './services/syncService';
 import HealthWorkerLayout from './components/HealthWorkerLayout';
 import AdminLayout from './components/AdminLayout';
 import RoleBadge from './components/RoleBadge';
+import { useTranslation } from 'react-i18next';
 
 function App() {
+  const { i18n } = useTranslation();
+
+  useEffect(() => {
+    document.body.classList.remove('font-sans', 'font-hi', 'font-as', 'font-mni');
+    if (['hi', 'as', 'mni'].includes(i18n.language)) {
+      document.body.classList.add(`font-${i18n.language}`);
+    } else {
+      document.body.classList.add('font-sans');
+    }
+  }, [i18n.language]);
+
   useEffect(() => {
     // Reset stuck items on startup
     resetSyncingItems().catch(console.error);

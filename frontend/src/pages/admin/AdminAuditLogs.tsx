@@ -3,8 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 
 import { escapeCsvField } from '../../utils/csv';
+import { useTranslation } from 'react-i18next';
 
 export default function AdminAuditLogs() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [logs, setLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -44,19 +46,19 @@ export default function AdminAuditLogs() {
     document.body.removeChild(link);
   };
 
-  if (loading) return <div className="p-8">Loading logs...</div>;
+  if (loading) return <div className="p-8">{t('loading_logs', 'Loading logs...')}</div>;
 
   return (
     <div className="p-8 max-w-7xl mx-auto">
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center space-x-4">
           <button onClick={() => navigate('/admin/dashboard')} className="text-gray-500 hover:text-gray-700 font-medium">
-            &larr; Back
+            &larr; {t('back', 'Back')}
           </button>
-          <h1 className="text-3xl font-bold text-gray-900">Audit Logs</h1>
+          <h1 className="text-3xl font-bold text-gray-900">{t('audit_logs', 'Audit Logs')}</h1>
         </div>
         <button onClick={exportToCsv} className="bg-indigo-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-indigo-700 transition">
-          Export CSV
+          {t('export_csv', 'Export CSV')}
         </button>
       </div>
 
@@ -64,10 +66,10 @@ export default function AdminAuditLogs() {
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Timestamp</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User ID</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Entity</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('timestamp_label', 'Timestamp')}</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('user_id_label', 'User ID')}</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('action_label', 'Action')}</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('entity_label', 'Entity')}</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
