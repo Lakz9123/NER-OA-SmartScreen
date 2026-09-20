@@ -8,8 +8,11 @@ export default function PatientList() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
 
-  const patients = useLiveQuery(() => db.patients.toArray()) || [];
-  const screenings = useLiveQuery(() => db.screenings.toArray()) || [];
+  const userStr = localStorage.getItem('user');
+  const user = userStr ? JSON.parse(userStr) : null;
+
+  const patients = useLiveQuery(() => db.patients.filter(p => !p.owner_id || p.owner_id === user?.id).toArray()) || [];
+  const screenings = useLiveQuery(() => db.screenings.filter(s => !s.owner_id || s.owner_id === user?.id).toArray()) || [];
   const isLoading = false;
 
   const filtered = patients.filter(p => 
@@ -99,7 +102,10 @@ export default function PatientList() {
                   </div>
                 </div>
                 <div className="ml-4">
-                  <button onClick={(e) => { e.stopPropagation(); navigate('/report', { state: { result: patient.latestScreening }}); }} className="h-10 w-10 rounded-full bg-white border border-slate-200 text-slate-400 flex items-center justify-center group-hover:border-teal-500 group-hover:text-teal-600 group-hover:bg-teal-50 transition-all shadow-sm hover:shadow">
+                  <button 
+                    disabled={!patient.latestScreening}
+                    onClick={(e) => { e.stopPropagation(); navigate('/report', { state: { result: patient.latestScreening }}); }} 
+                    className={`h-10 w-10 rounded-full bg-white border flex items-center justify-center transition-all shadow-sm ${patient.latestScreening ? 'border-slate-200 text-slate-400 group-hover:border-teal-500 group-hover:text-teal-600 group-hover:bg-teal-50 hover:shadow' : 'border-slate-100 text-slate-200 cursor-not-allowed opacity-50'}`}>
                     <Activity className="h-5 w-5" />
                   </button>
                 </div>

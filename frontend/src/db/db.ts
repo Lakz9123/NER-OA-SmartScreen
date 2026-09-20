@@ -9,6 +9,7 @@ export interface PatientRecord {
   consent_flag: boolean;
   sync_status: 'pending' | 'syncing' | 'synced' | 'failed';
   created_at: string;
+  owner_id?: number;
 }
 
 export interface ScreeningRecord {
@@ -31,6 +32,7 @@ export interface ScreeningRecord {
   created_at: string;
   followup_status?: string;
   followup_note?: string;
+  owner_id?: number;
 }
 
 export interface OutboxRecord {
@@ -40,6 +42,7 @@ export interface OutboxRecord {
   status: 'pending' | 'syncing' | 'failed';
   reason?: string;
   created_at: string;
+  owner_id?: number;
 }
 
 export class SmartScreenDB extends Dexie {

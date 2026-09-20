@@ -152,3 +152,39 @@ def test_sync_created_at_and_risk_override(client, normal_user_token, db_session
     # Check that server risk level overrides the client's "Low"
     assert scr.risk_level != "Low"
     assert scr.risk_score != 0.1
+
+def test_sync_followup_update(client, normal_user_token, admin_token, db_session):
+    headers = {"Authorization": f"Bearer {normal_user_token}"}
+    
+    # Sync a new screening first
+    payload = {
+        "patients": [{"id": "pat-2", "age_band": "50-59", "sex": "female", "village_code": "V01", "consent_flag": True, "created_at": "2023-10-01T10:00:00Z"}],
+        "screenings": [{"id": "scr-2", "patient_id": "pat-2", "pain_score": 5, "stiffness_score": 5, "function_score": 5, "risk_level": "Low", "risk_score": 0.1, "model_version": "v1.0-client", "created_at": "2023-10-01T10:05:00Z"}]
+    }
+    client.post("/sync/batch", json=payload, headers=headers)
+    
+    # Now try updating followup_status by the owner
+    payload["screenings"][0]["followup_status"] = "referred"
+    response = client.post("/sync/batch", json=payload, headers=headers)
+    data = response.json()
+    assert data["results"][1]["status"] == "updated"
+    
+    # Now try updating with invalid status
+    payload["screenings"][0]["followup_status"] = "invalid_status"
+    response_invalid = client.post("/sync/batch", json=payload, headers=headers)
+    assert response_invalid.status_code == 422
+    
+    # Now try updating by a different non-admin user
+    from app.models.user import User
+    from app.core.security import get_password_hash
+    other_user = User(username="other_hw", email="other@ner-oa.in", full_name="Other HW", role="health_worker", hashed_password=get_password_hash("pw"), is_active=True)
+    db_session.add(other_user)
+    db_session.commit()
+    
+    login_res = client.post("/auth/login", data={"username": "other_hw", "password": "pw"})
+    other_token = login_res.json()["access_token"]
+    
+    payload["screenings"][0]["followup_status"] = "completed"
+    response_other = client.post("/sync/batch", json=payload, headers={"Authorization": f"Bearer {other_token}"})
+    assert response_other.json()["results"][1]["status"] == "failed"
+    assert "Not allowed" in response_other.json()["results"][1]["reason"]

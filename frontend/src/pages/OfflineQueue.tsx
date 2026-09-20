@@ -11,9 +11,12 @@ export default function OfflineQueue() {
   const [syncStatus, setSyncStatus] = useState<'idle' | 'success'>('idle');
   const [syncMessage, setSyncMessage] = useState('');
 
-  const outbox = useLiveQuery(() => db.outbox.toArray()) || [];
-  const syncedPatients = useLiveQuery(() => db.patients.where('sync_status').equals('synced').limit(10).toArray()) || [];
-  const syncedScreenings = useLiveQuery(() => db.screenings.where('sync_status').equals('synced').limit(10).toArray()) || [];
+  const userStr = localStorage.getItem('user');
+  const user = userStr ? JSON.parse(userStr) : null;
+
+  const outbox = useLiveQuery(() => db.outbox.filter(o => !o.owner_id || o.owner_id === user?.id).toArray()) || [];
+  const syncedPatients = useLiveQuery(() => db.patients.where('sync_status').equals('synced').filter(p => !p.owner_id || p.owner_id === user?.id).limit(10).toArray()) || [];
+  const syncedScreenings = useLiveQuery(() => db.screenings.where('sync_status').equals('synced').filter(s => !s.owner_id || s.owner_id === user?.id).limit(10).toArray()) || [];
 
   const handleSync = async () => {
     setIsSyncing(true);

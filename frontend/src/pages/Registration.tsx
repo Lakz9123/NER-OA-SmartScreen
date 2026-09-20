@@ -22,6 +22,10 @@ export default function Registration() {
     setError('');
     
     try {
+      const userStr = localStorage.getItem('user');
+      const user = userStr ? JSON.parse(userStr) : null;
+      const owner_id = user?.id;
+
       const patientId = uuidv4();
       const now = new Date().toISOString();
       const patientData = {
@@ -32,7 +36,8 @@ export default function Registration() {
         occupation_type: formData.occupation_type,
         consent_flag: true,
         sync_status: 'pending' as const,
-        created_at: now
+        created_at: now,
+        owner_id
       };
 
       await db.patients.add(patientData);
@@ -42,7 +47,8 @@ export default function Registration() {
         type: 'PatientSync',
         payload: patientData,
         status: 'pending',
-        created_at: now
+        created_at: now,
+        owner_id
       });
       
       navigate('/consent', { state: { patientId } });

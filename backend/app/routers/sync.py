@@ -66,9 +66,13 @@ def sync_batch(
         try:
             existing = db.query(Screening).filter(Screening.id == s_in.id).first()
             if existing:
+                if existing.health_worker_id != current_user.id and current_user.role != 'admin':
+                    results.append(SyncRecordResult(id=s_in.id, type='screening', status='failed', reason="Not allowed"))
+                    continue
+
                 updated = False
-                if getattr(s_in, 'followup_status', None) is not None and existing.followup_status != s_in.followup_status:
-                    existing.followup_status = s_in.followup_status
+                if getattr(s_in, 'followup_status', None) is not None and existing.followup_status != s_in.followup_status.value:
+                    existing.followup_status = s_in.followup_status.value
                     updated = True
                 if getattr(s_in, 'followup_note', None) is not None and existing.followup_note != s_in.followup_note:
                     existing.followup_note = s_in.followup_note

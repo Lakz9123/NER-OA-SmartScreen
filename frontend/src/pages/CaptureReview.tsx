@@ -43,6 +43,10 @@ export default function CaptureReview() {
     };
 
     try {
+      const userStr = localStorage.getItem('user');
+      const user = userStr ? JSON.parse(userStr) : null;
+      const owner_id = user?.id;
+
       const localRisk = await analyzeRisk(payload);
       
       const screeningId = uuidv4();
@@ -56,7 +60,8 @@ export default function CaptureReview() {
         model_version: localRisk.model_version,
         explainability_data: localRisk.explainability_data,
         sync_status: 'pending' as const,
-        created_at: now
+        created_at: now,
+        owner_id
       };
 
       await db.screenings.add(localResult);
@@ -66,7 +71,8 @@ export default function CaptureReview() {
         type: 'ScreeningSync',
         payload: localResult,
         status: 'pending',
-        created_at: now
+        created_at: now,
+        owner_id
       });
 
       navigate('/analysis', { state: { result: localResult } });

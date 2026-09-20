@@ -15,7 +15,9 @@ router = APIRouter()
 def login_access_token(request: Request, db: Session = Depends(deps.get_db), form_data: OAuth2PasswordRequestForm = Depends()):
     user = db.query(User).filter(User.username == form_data.username).first()
     if not user or not security.verify_password(form_data.password, user.hashed_password):
-        log_audit(db, action="login_failed", user_id=None, entity_type="user", entity_id=form_data.username, request=request)
+        import hashlib
+        hashed_username = hashlib.sha256(form_data.username.encode('utf-8')).hexdigest()[:12]
+        log_audit(db, action="login_failed", user_id=None, entity_type="user", entity_id=hashed_username, request=request)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",

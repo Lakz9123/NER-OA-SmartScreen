@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Activity, User, Lock, AlertCircle, Fingerprint, ShieldCheck } from 'lucide-react';
 import { login } from '../api/client';
 
+import { syncOutbox } from '../services/syncService';
+
 export default function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -16,6 +18,17 @@ export default function Login() {
     setError('');
     
     try {
+      const oldUserStr = localStorage.getItem('user');
+      const oldUser = oldUserStr ? JSON.parse(oldUserStr) : null;
+
+      if (oldUser && oldUser.username !== username) {
+         try {
+           await syncOutbox();
+         } catch (syncErr) {
+           console.error("Failed to sync previous user's data", syncErr);
+         }
+      }
+
       const { access_token } = await login(username, password);
       localStorage.setItem('token', access_token);
       

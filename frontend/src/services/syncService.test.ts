@@ -33,10 +33,11 @@ describe('syncService', () => {
     global.fetch = originalFetch;
   });
 
-  it('handles success correctly', async () => {
+  it('handles success and updated correctly', async () => {
     const mockItems = [
       { id: '1', type: 'PatientSync', payload: { id: 'p1' }, status: 'pending' },
-      { id: '2', type: 'ScreeningSync', payload: { id: 's1' }, status: 'pending' }
+      { id: '2', type: 'ScreeningSync', payload: { id: 's1' }, status: 'pending' },
+      { id: '3', type: 'ScreeningSync', payload: { id: 's2' }, status: 'pending' }
     ];
     (db.outbox.toArray as any).mockResolvedValue(mockItems);
     
@@ -46,7 +47,8 @@ describe('syncService', () => {
       json: async () => ({
         results: [
           { id: 'p1', type: 'patient', status: 'created' },
-          { id: 's1', type: 'screening', status: 'created', server_risk_level: 'High' }
+          { id: 's1', type: 'screening', status: 'created', server_risk_level: 'High' },
+          { id: 's2', type: 'screening', status: 'updated' }
         ]
       })
     });
@@ -54,9 +56,10 @@ describe('syncService', () => {
     const result = await syncOutbox();
 
     expect(result.success).toBe(true);
-    expect(db.outbox.delete).toHaveBeenCalledTimes(2);
+    expect(db.outbox.delete).toHaveBeenCalledTimes(3);
     expect(db.patients.update).toHaveBeenCalledWith('p1', { sync_status: 'synced' });
     expect(db.screenings.update).toHaveBeenCalledWith('s1', { sync_status: 'synced', risk_level: 'High' });
+    expect(db.screenings.update).toHaveBeenCalledWith('s2', { sync_status: 'synced' });
   });
 
   it('handles partial failure correctly', async () => {

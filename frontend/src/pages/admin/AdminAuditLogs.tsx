@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 
+import { escapeCsvField } from '../../utils/csv';
+
 export default function AdminAuditLogs() {
   const navigate = useNavigate();
   const [logs, setLogs] = useState<any[]>([]);
@@ -23,14 +25,14 @@ export default function AdminAuditLogs() {
 
   const exportToCsv = () => {
     if (logs.length === 0) return;
-    const headers = ['Timestamp', 'User ID', 'Action', 'Entity Type', 'Entity ID'];
+    const headers = ['Timestamp', 'User ID', 'Action', 'Entity Type', 'Entity ID'].map(escapeCsvField);
     const rows = logs.map(log => [
       new Date(log.timestamp).toISOString(),
       log.user_id || 'System',
       log.action,
       log.entity_type || '',
       log.entity_id || ''
-    ]);
+    ].map(escapeCsvField));
     
     const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });

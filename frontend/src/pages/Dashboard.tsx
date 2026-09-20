@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { UserPlus, Users, Settings, Activity, Clock, AlertTriangle, ArrowRight } from 'lucide-react';
 import { getMe } from '../api/client';
 
+import { useLiveQuery } from 'dexie-react-hooks';
+import { db } from '../db/db';
+
 export default function Dashboard() {
   const navigate = useNavigate();
   const [user, setUser] = useState<any>(null);
@@ -13,6 +16,12 @@ export default function Dashboard() {
       navigate('/login');
     });
   }, [navigate]);
+
+  const userStr = localStorage.getItem('user');
+  const loggedInUser = userStr ? JSON.parse(userStr) : null;
+  const userScreenings = useLiveQuery(() => db.screenings.filter(s => !s.owner_id || s.owner_id === loggedInUser?.id).toArray()) || [];
+  const pendingCount = useLiveQuery(() => db.outbox.filter(o => !o.owner_id || o.owner_id === loggedInUser?.id).count()) || 0;
+  const highRiskCount = userScreenings.filter(s => s.risk_level === 'High').length;
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans">
@@ -56,7 +65,7 @@ export default function Dashboard() {
                 Welcome back, {user ? (user.full_name || user.username) : '...'}!
               </h1>
               <p className="text-teal-100 text-lg max-w-lg leading-relaxed">
-                You have <strong className="text-white">3</strong> screenings pending upload. Continue making an impact in your community today.
+                You have <strong className="text-white">{pendingCount}</strong> screenings pending upload. Continue making an impact in your community today.
               </p>
             </div>
             
@@ -78,8 +87,8 @@ export default function Dashboard() {
               <Activity className="h-6 w-6 text-blue-500" />
             </div>
             <div>
-              <p className="text-sm font-medium text-slate-500">Today</p>
-              <p className="text-2xl font-bold text-slate-800">12</p>
+              <p className="text-sm font-medium text-slate-500">Total Screenings</p>
+              <p className="text-2xl font-bold text-slate-800">{userScreenings.length}</p>
             </div>
           </div>
           <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex items-center space-x-4 hover:shadow-md transition-shadow">
@@ -87,8 +96,8 @@ export default function Dashboard() {
               <Clock className="h-6 w-6 text-amber-500" />
             </div>
             <div>
-              <p className="text-sm font-medium text-slate-500">Pending</p>
-              <p className="text-2xl font-bold text-slate-800">3</p>
+              <p className="text-sm font-medium text-slate-500">Pending Sync</p>
+              <p className="text-2xl font-bold text-slate-800">{pendingCount}</p>
             </div>
           </div>
           <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex items-center space-x-4 hover:shadow-md transition-shadow col-span-2 md:col-span-1">
@@ -97,7 +106,7 @@ export default function Dashboard() {
             </div>
             <div>
               <p className="text-sm font-medium text-slate-500">High Risk</p>
-              <p className="text-2xl font-bold text-slate-800">2</p>
+              <p className="text-2xl font-bold text-slate-800">{highRiskCount}</p>
             </div>
           </div>
         </div>

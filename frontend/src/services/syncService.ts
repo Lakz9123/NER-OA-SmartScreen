@@ -101,7 +101,7 @@ export const syncOutbox = async (isBackground: boolean = false) => {
       continue;
     }
 
-    if (result.status === 'created' || result.status === 'already_synced') {
+    if (result.status === 'created' || result.status === 'already_synced' || result.status === 'updated') {
       await db.outbox.delete(item.id);
       if (item.type === 'PatientSync') {
         await db.patients.update(item.payload.id, { sync_status: 'synced' });

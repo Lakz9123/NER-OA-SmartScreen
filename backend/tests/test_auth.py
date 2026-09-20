@@ -4,9 +4,18 @@ def test_login(client, admin_token):
     assert response.status_code == 200
     assert "access_token" in response.json()
 
-def test_login_invalid(client):
-    response = client.post("/auth/login", data={"username": "invalid", "password": "invalid"})
+def test_login_invalid(client, db_session):
+    from app.models.audit_log import AuditLog
+    response = client.post("/auth/login", data={"username": "invalid_test", "password": "invalid"})
     assert response.status_code == 401
+    
+    # Check that audit log contains hashed username, not raw
+    import hashlib
+    expected_hash = hashlib.sha256(b"invalid_test").hexdigest()[:12]
+    log = db_session.query(AuditLog).filter(AuditLog.action == "login_failed").order_by(AuditLog.timestamp.desc()).first()
+    assert log is not None
+    assert log.entity_id == expected_hash
+    assert log.entity_id != "invalid_test"
 
 def test_login_disabled(client, admin_token):
     headers = {"Authorization": f"Bearer {admin_token}"}

@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from typing import List, Optional
 from .patient import PatientCreate, Patient
-from .screening import ScreeningCreate, Screening
+from .screening import ScreeningCreate, Screening, FollowupStatus
 
 class PatientSyncItem(BaseModel):
     id: str
@@ -30,7 +30,7 @@ class ScreeningSyncItem(BaseModel):
     model_version: str
     explainability_data: Optional[dict] = None
     created_at: str
-    followup_status: Optional[str] = None
+    followup_status: Optional[FollowupStatus] = None
     followup_note: Optional[str] = None
 
 class SyncBatchRequest(BaseModel):
