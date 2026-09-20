@@ -1,4 +1,4 @@
-import { Outlet, useNavigate, useLocation, Link } from 'react-router-dom';
+import { Outlet, useLocation, Link } from 'react-router-dom';
 import { Activity, LayoutDashboard, Users, FileText, LogOut } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { getMe } from '../api/client';

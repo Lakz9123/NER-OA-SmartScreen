@@ -105,6 +105,6 @@ export async function getMe() {
     if (cachedUser) {
       return JSON.parse(cachedUser);
     }
-    return { username: 'Offline User', role: 'hw' };
+    return { username: 'Offline User', role: 'health_worker' };
   }
 }

@@ -38,6 +38,18 @@ def create_screening(
     db.refresh(screening)
     log_audit(db, action="create", user_id=current_user.id, entity_type="screening", entity_id=screening.id, request=request)
     return screening
+@router.get("/", response_model=List[ScreeningSchema])
+def read_screenings(
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_active_user)
+):
+    if current_user.role == "admin":
+        screenings = db.query(Screening).offset(skip).limit(limit).all()
+    else:
+        screenings = db.query(Screening).filter(Screening.health_worker_id == current_user.id).offset(skip).limit(limit).all()
+    return screenings
 
 @router.get("/{screening_id}", response_model=ScreeningSchema)
 def read_screening(

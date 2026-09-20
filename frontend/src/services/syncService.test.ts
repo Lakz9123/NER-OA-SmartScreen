@@ -26,8 +26,12 @@ describe('syncService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     global.fetch = vi.fn();
-    
-    global.localStorage = { getItem: vi.fn((k) => k === 'user' ? JSON.stringify({ id: 'user-a' }) : 'fake-token') } as any;
+
+    vi.stubGlobal('localStorage', { 
+      getItem: vi.fn((k) => k === 'user' ? JSON.stringify({id: 'workerA'}) : 'token'),
+      setItem: vi.fn(),
+      removeItem: vi.fn()
+    });
   });
 
   afterEach(() => {
@@ -135,7 +139,11 @@ describe('syncService', () => {
 
   it('never sends another user\'s outbox items and assigns orphaned items', async () => {
     // User B is logged in
-    global.localStorage = { getItem: vi.fn((k) => k === 'user' ? JSON.stringify({ id: 'user-b' }) : 'token') } as any;
+    vi.stubGlobal('localStorage', { 
+      getItem: vi.fn((k) => k === 'user' ? JSON.stringify({ id: 'user-b' }) : 'token'),
+      setItem: vi.fn(),
+      removeItem: vi.fn()
+    });
 
     const mockItems = [
       // user-a's item (should be ignored)

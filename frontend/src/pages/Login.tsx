@@ -2,8 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Activity, User, Lock, AlertCircle, Fingerprint, ShieldCheck } from 'lucide-react';
 import { login } from '../api/client';
-
-
+import { getRole, homePathFor } from '../utils/roles';
 export default function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -17,19 +16,18 @@ export default function Login() {
     setError('');
     
     try {
-
       const { access_token } = await login(username, password);
       localStorage.setItem('token', access_token);
-      
-      // Need to get user role to route correctly
       // We can fetch /users/me
       const { getMe } = await import('../api/client');
       const user = await getMe();
-      if (user.role === 'admin') {
-        navigate('/admin/dashboard');
-      } else {
-        navigate('/dashboard');
+      const role = getRole(user);
+      
+      if (!role) {
+        throw new Error('Unknown or missing role. Please contact administrator.');
       }
+      
+      navigate(homePathFor(role));
     } catch (err: any) {
       setError(err.message || 'Incorrect username or password');
     } finally {

@@ -103,3 +103,42 @@ def test_audit_logs_no_health_data(client, normal_user_token, admin_token):
     assert "pain_score" not in logs_str
     assert "sex" not in logs_str
     assert "consent_flag" not in logs_str
+
+def test_read_all_screenings_admin(client, normal_user_token, normal_user2_token, admin_token):
+    headers_normal = {"Authorization": f"Bearer {normal_user_token}"}
+    headers_normal2 = {"Authorization": f"Bearer {normal_user2_token}"}
+    headers_admin = {"Authorization": f"Bearer {admin_token}"}
+
+    # Worker 1 creates patient and screening
+    p1 = client.post("/patients/", json={"age_band": "60-70", "sex": "F", "village_code": "V002", "consent_flag": True}, headers=headers_normal).json()["id"]
+    s1 = client.post("/screenings/", json={"patient_id": p1, "pain_score": 5, "stiffness_score": 2, "function_score": 10}, headers=headers_normal).json()["id"]
+
+    # Worker 2 creates patient and screening
+    p2 = client.post("/patients/", json={"age_band": "60-70", "sex": "F", "village_code": "V002", "consent_flag": True}, headers=headers_normal2).json()["id"]
+    s2 = client.post("/screenings/", json={"patient_id": p2, "pain_score": 5, "stiffness_score": 2, "function_score": 10}, headers=headers_normal2).json()["id"]
+
+    # Admin reads all
+    res = client.get("/screenings/", headers=headers_admin)
+    assert res.status_code == 200
+    ids = [s["id"] for s in res.json()]
+    assert s1 in ids
+    assert s2 in ids
+
+def test_read_all_screenings_health_worker(client, normal_user_token, normal_user2_token):
+    headers_normal = {"Authorization": f"Bearer {normal_user_token}"}
+    headers_normal2 = {"Authorization": f"Bearer {normal_user2_token}"}
+
+    # Worker 1 creates patient and screening
+    p1 = client.post("/patients/", json={"age_band": "60-70", "sex": "F", "village_code": "V002", "consent_flag": True}, headers=headers_normal).json()["id"]
+    s1 = client.post("/screenings/", json={"patient_id": p1, "pain_score": 5, "stiffness_score": 2, "function_score": 10}, headers=headers_normal).json()["id"]
+
+    # Worker 2 creates patient and screening
+    p2 = client.post("/patients/", json={"age_band": "60-70", "sex": "F", "village_code": "V002", "consent_flag": True}, headers=headers_normal2).json()["id"]
+    s2 = client.post("/screenings/", json={"patient_id": p2, "pain_score": 5, "stiffness_score": 2, "function_score": 10}, headers=headers_normal2).json()["id"]
+
+    # Worker 1 reads all
+    res = client.get("/screenings/", headers=headers_normal)
+    assert res.status_code == 200
+    ids = [s["id"] for s in res.json()]
+    assert s1 in ids
+    assert s2 not in ids # Should not see worker 2's screening
