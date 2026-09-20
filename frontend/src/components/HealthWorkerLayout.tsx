@@ -3,6 +3,7 @@ import { Home, Users, Settings, Database, Activity } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { getMe } from '../api/client';
 import { useTranslation } from 'react-i18next';
+import LanguageSwitcher from './LanguageSwitcher';
 
 export default function HealthWorkerLayout() {
   const { t } = useTranslation();
@@ -28,12 +29,15 @@ export default function HealthWorkerLayout() {
               <span className="block text-xs text-slate-500 font-medium">{user?.facility || t('field_worker', 'Field Worker')}</span>
             </div>
           </div>
-          <div className="flex items-center space-x-2">
-            <span className="flex h-3 w-3">
+          <div className="flex items-center space-x-4">
+            <LanguageSwitcher />
+            <div className="hidden sm:flex items-center space-x-2">
+              <span className="flex h-3 w-3">
               <span className={`animate-ping absolute inline-flex h-3 w-3 rounded-full opacity-75 ${navigator.onLine ? 'bg-emerald-400' : 'bg-rose-400'}`}></span>
               <span className={`relative inline-flex rounded-full h-3 w-3 ${navigator.onLine ? 'bg-emerald-500' : 'bg-rose-500'}`}></span>
             </span>
-            <span className="text-xs font-bold text-slate-600 uppercase tracking-widest">{navigator.onLine ? t('online', 'Online') : t('offline', 'Offline')}</span>
+            <span className="hidden sm:inline text-xs font-bold text-slate-600 uppercase tracking-widest">{navigator.onLine ? t('online', 'Online') : t('offline', 'Offline')}</span>
+            </div>
           </div>
         </div>
       </header>

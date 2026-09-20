@@ -1,18 +1,12 @@
+/* Hide Google Translate Widget UI completely */
 #google_translate_element {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  z-index: 999999;
-  background: white;
-  padding: 10px;
-  border-radius: 8px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e2e8f0;
+  display: none !important;
 }
 
 /* Hide the Google Translate banner at the top */
 .skiptranslate iframe {
   display: none !important;
+  visibility: hidden !important;
 }
 
 /* Prevent the body from being pushed down by the invisible banner */
@@ -20,29 +14,17 @@ body {
   top: 0 !important;
 }
 
-/* Style the dropdown nicely */
-.goog-te-combo {
-  padding: 8px 12px;
-  border-radius: 8px;
-  border: 1px solid #cbd5e1;
-  background-color: #f8fafc;
-  color: #334155;
-  font-family: inherit;
-  font-size: 14px;
-  font-weight: 500;
-  outline: none;
-  cursor: pointer;
-}
-
-.goog-te-combo:focus {
-  border-color: #0d9488;
-  box-shadow: 0 0 0 2px rgba(13, 148, 136, 0.2);
-}
-
-/* Hide the "Powered by Google Translate" text */
-.goog-logo-link {
+/* Hide the tooltip on hover */
+.goog-tooltip {
   display: none !important;
 }
-.goog-te-gadget {
-  color: transparent !important;
+
+.goog-tooltip:hover {
+  display: none !important;
+}
+
+.goog-text-highlight {
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
 }

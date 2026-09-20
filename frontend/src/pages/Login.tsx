@@ -4,6 +4,7 @@ import { Activity, User, Lock, AlertCircle, Fingerprint, ShieldCheck } from 'luc
 import { login } from '../api/client';
 import { getRole, homePathFor } from '../utils/roles';
 import { useTranslation } from 'react-i18next';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 
 export default function Login() {
   const { t } = useTranslation();
@@ -73,8 +74,10 @@ export default function Login() {
         </div>
       </div>
 
-      {/* Right Column - Login Form */}
       <div className="w-full lg:w-1/2 flex flex-col p-6 sm:p-12 bg-slate-50 min-h-screen">
+        <div className="w-full flex justify-end mb-4">
+          <LanguageSwitcher />
+        </div>
         
         <div className="w-full max-w-md m-auto opacity-0 animate-fade-in-up-delay-1">
           
