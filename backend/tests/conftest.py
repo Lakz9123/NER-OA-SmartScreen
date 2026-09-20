@@ -62,3 +62,13 @@ def normal_user_token(db_session):
     db_session.commit()
     db_session.refresh(user)
     return create_access_token(subject=user.username)
+
+@pytest.fixture(scope="function")
+def normal_user2_token(db_session):
+    from app.models.user import User
+    from app.core.security import get_password_hash
+    user = User(username="testuser2", email="user2@example.com", hashed_password=get_password_hash("testuser2"), role="health_worker")
+    db_session.add(user)
+    db_session.commit()
+    db_session.refresh(user)
+    return create_access_token(subject=user.username)

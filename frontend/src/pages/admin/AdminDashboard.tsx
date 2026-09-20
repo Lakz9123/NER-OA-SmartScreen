@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 
 interface AnalyticsSummary {
@@ -19,7 +18,6 @@ const COLORS = {
 };
 
 export default function AdminDashboard() {
-  const navigate = useNavigate();
   const [data, setData] = useState<AnalyticsSummary | null>(null);
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -64,17 +62,6 @@ export default function AdminDashboard() {
     <div className="p-8 max-w-7xl mx-auto">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-gray-900">System Analytics</h1>
-        <div className="space-x-4">
-          <button onClick={() => navigate('/admin/users')} className="bg-indigo-50 text-indigo-700 px-4 py-2 rounded-lg font-medium hover:bg-indigo-100 transition">
-            Manage Users
-          </button>
-          <button onClick={() => navigate('/admin/audit-logs')} className="bg-slate-50 text-slate-700 px-4 py-2 rounded-lg font-medium hover:bg-slate-100 transition border border-slate-200">
-            View Audit Logs
-          </button>
-          <button onClick={() => { localStorage.removeItem('token'); navigate('/login'); }} className="bg-rose-50 text-rose-700 px-4 py-2 rounded-lg font-medium hover:bg-rose-100 transition">
-            Logout
-          </button>
-        </div>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">

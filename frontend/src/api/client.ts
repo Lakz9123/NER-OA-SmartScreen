@@ -5,13 +5,28 @@ export async function login(username: string, password: string) {
   formData.append('username', username);
   formData.append('password', password);
 
-  const response = await fetch(`${API_BASE_URL}/auth/login`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: formData,
-  });
+  let response;
+  try {
+    response = await fetch(`${API_BASE_URL}/auth/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: formData,
+    });
+  } catch (error: any) {
+    if (error instanceof TypeError && error.message === 'Failed to fetch') {
+      throw new Error('Cannot reach the server. Check your internet or try again.');
+    }
+    throw error;
+  }
+
+  if (response.status === 401 || response.status === 400) {
+    throw new Error('Incorrect username or password.');
+  }
+  if (response.status === 403) {
+    throw new Error('Account disabled or unauthorized.');
+  }
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));

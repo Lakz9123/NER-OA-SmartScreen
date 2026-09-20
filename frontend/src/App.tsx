@@ -21,6 +21,9 @@ import AdminUsers from './pages/admin/AdminUsers';
 import AdminAuditLogs from './pages/admin/AdminAuditLogs';
 import ProtectedRoute from './components/ProtectedRoute';
 import { syncOutbox, resetSyncingItems } from './services/syncService';
+import HealthWorkerLayout from './components/HealthWorkerLayout';
+import AdminLayout from './components/AdminLayout';
+import RoleBadge from './components/RoleBadge';
 
 function App() {
   useEffect(() => {
@@ -48,6 +51,7 @@ function App() {
 
   return (
     <Router>
+      <RoleBadge />
       <div className="min-h-screen bg-gray-50">
         <Routes>
           {/* 1. Login Screen */}
@@ -55,28 +59,32 @@ function App() {
           
           {/* Health Worker Routes */}
           <Route element={<ProtectedRoute allowedRoles={['hw']} />}>
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/register-patient" element={<Registration />} />
-            <Route path="/consent" element={<Consent />} />
-            <Route path="/questionnaire/part1" element={<QuestionnairePart1 />} />
-            <Route path="/questionnaire/part2" element={<QuestionnairePart2 />} />
-            <Route path="/questionnaire/part3" element={<QuestionnairePart3 />} />
-            <Route path="/capture/setup" element={<CaptureSetup />} />
-            <Route path="/capture/tracking" element={<CaptureTracking />} />
-            <Route path="/capture/recapture" element={<CaptureRecapture />} />
-            <Route path="/capture/review" element={<CaptureReview />} />
-            <Route path="/analysis" element={<RiskAnalysis />} />
-            <Route path="/report" element={<PatientReport />} />
-            <Route path="/patients" element={<PatientList />} />
-            <Route path="/offline-queue" element={<OfflineQueue />} />
-            <Route path="/settings" element={<Settings />} />
+            <Route element={<HealthWorkerLayout />}>
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/register-patient" element={<Registration />} />
+              <Route path="/consent" element={<Consent />} />
+              <Route path="/questionnaire/part1" element={<QuestionnairePart1 />} />
+              <Route path="/questionnaire/part2" element={<QuestionnairePart2 />} />
+              <Route path="/questionnaire/part3" element={<QuestionnairePart3 />} />
+              <Route path="/capture/setup" element={<CaptureSetup />} />
+              <Route path="/capture/tracking" element={<CaptureTracking />} />
+              <Route path="/capture/recapture" element={<CaptureRecapture />} />
+              <Route path="/capture/review" element={<CaptureReview />} />
+              <Route path="/analysis" element={<RiskAnalysis />} />
+              <Route path="/report" element={<PatientReport />} />
+              <Route path="/patients" element={<PatientList />} />
+              <Route path="/offline-queue" element={<OfflineQueue />} />
+              <Route path="/settings" element={<Settings />} />
+            </Route>
           </Route>
 
           {/* Admin Routes */}
           <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
-            <Route path="/admin/dashboard" element={<AdminDashboard />} />
-            <Route path="/admin/users" element={<AdminUsers />} />
-            <Route path="/admin/audit-logs" element={<AdminAuditLogs />} />
+            <Route element={<AdminLayout />}>
+              <Route path="/admin/dashboard" element={<AdminDashboard />} />
+              <Route path="/admin/users" element={<AdminUsers />} />
+              <Route path="/admin/audit-logs" element={<AdminAuditLogs />} />
+            </Route>
           </Route>
           
           {/* Fallback route */}

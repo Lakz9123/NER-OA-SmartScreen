@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { UserPlus, Users, Settings, Activity, Clock, AlertTriangle, ArrowRight } from 'lucide-react';
 import { getMe } from '../api/client';
+import { logout } from '../utils/auth';
 
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db/db';
@@ -12,8 +13,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     getMe().then(setUser).catch(() => {
-      localStorage.removeItem('token');
-      navigate('/login');
+      logout();
     });
   }, [navigate]);
 
@@ -24,32 +24,7 @@ export default function Dashboard() {
   const highRiskCount = userScreenings.filter(s => s.risk_level === 'High').length;
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans">
-      
-      {/* Top Navigation */}
-      <header className="bg-white/80 backdrop-blur-md border-b border-slate-200 sticky top-0 z-20">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center space-x-3">
-            <div className="bg-gradient-to-tr from-teal-600 to-emerald-400 text-white h-9 w-9 rounded-full flex items-center justify-center font-bold text-sm shadow-md">
-              HW
-            </div>
-            <div>
-              <span className="block text-sm font-bold text-slate-800 leading-tight">{user ? user.username : 'Loading...'}</span>
-              <span className="block text-xs text-slate-500 font-medium">{user ? (user.role === 'admin' ? 'Administrator' : 'Health Worker') : ''}</span>
-            </div>
-          </div>
-          <button 
-            onClick={() => {
-              localStorage.removeItem('token');
-              navigate('/login');
-            }}
-            className="text-sm font-semibold text-rose-500 hover:text-rose-600 bg-rose-50 hover:bg-rose-100 px-4 py-2 rounded-xl transition-all"
-          >
-            Logout
-          </button>
-        </div>
-      </header>
-
+    <div className="font-sans">
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-8">
         
         {/* Hero Section with Glassmorphism */}

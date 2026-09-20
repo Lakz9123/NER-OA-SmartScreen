@@ -58,18 +58,19 @@ def test_admin_disable_self(client: TestClient, admin_token):
     assert patch_resp2.status_code == 400
     assert "Cannot remove own admin role" in patch_resp2.json()["detail"]
 
-def test_admin_analytics_counts(client: TestClient, admin_token):
+def test_admin_analytics_counts(client: TestClient, admin_token, normal_user_token):
     headers = {"Authorization": f"Bearer {admin_token}"}
+    normal_headers = {"Authorization": f"Bearer {normal_user_token}"}
     
     # Create patient and screening
     p_res = client.post("/patients/", json={
         "age_band": "60-70", "sex": "F", "village_code": "V999", "consent_flag": True
-    }, headers=headers)
+    }, headers=normal_headers)
     assert p_res.status_code == 200
     
     client.post("/screenings/", json={
         "patient_id": p_res.json()["id"], "pain_score": 5, "stiffness_score": 2, "function_score": 10
-    }, headers=headers)
+    }, headers=normal_headers)
     
     res = client.get("/admin/analytics/summary", headers=headers)
     data = res.json()

@@ -16,6 +16,9 @@ def create_patient(
     db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_active_user)
 ):
+    if current_user.role == "admin":
+        raise HTTPException(status_code=403, detail="Admins cannot register patients")
+    
     patient = Patient(
         **patient_in.dict(),
         registered_by_id=current_user.id

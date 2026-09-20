@@ -1,5 +1,5 @@
-def test_create_screening(client, admin_token):
-    headers = {"Authorization": f"Bearer {admin_token}"}
+def test_create_screening(client, normal_user_token):
+    headers = {"Authorization": f"Bearer {normal_user_token}"}
     
     # Create patient first
     patient_res = client.post("/patients/", json={
@@ -28,8 +28,8 @@ def test_create_screening(client, admin_token):
     assert data["risk_level"] in ["Low", "Moderate", "High"]
     assert data["symmetry_index"] == 0.95
 
-def test_update_followup(client, admin_token):
-    headers = {"Authorization": f"Bearer {admin_token}"}
+def test_update_followup(client, normal_user_token):
+    headers = {"Authorization": f"Bearer {normal_user_token}"}
     
     # Create patient
     patient_res = client.post("/patients/", json={
@@ -54,8 +54,8 @@ def test_update_followup(client, admin_token):
     assert data["followup_status"] == "referred"
     assert data["followup_note"] == "Needs physio"
 
-def test_update_followup_invalid_status(client, admin_token):
-    headers = {"Authorization": f"Bearer {admin_token}"}
+def test_update_followup_invalid_status(client, normal_user_token):
+    headers = {"Authorization": f"Bearer {normal_user_token}"}
     # Create patient & screening
     p_res = client.post("/patients/", json={"age_band": "60-70", "sex": "F", "village_code": "V002", "consent_flag": True}, headers=headers)
     scr_res = client.post("/screenings/", json={"patient_id": p_res.json()["id"], "pain_score": 5, "stiffness_score": 2, "function_score": 10}, headers=headers)
@@ -64,28 +64,30 @@ def test_update_followup_invalid_status(client, admin_token):
     patch_res = client.patch(f"/screenings/{scr_id}/followup", json={"followup_status": "invalid"}, headers=headers)
     assert patch_res.status_code == 422
 
-def test_update_followup_other_worker(client, admin_token, normal_user_token):
-    headers_admin = {"Authorization": f"Bearer {admin_token}"}
+def test_update_followup_other_worker(client, normal_user_token, normal_user2_token):
     headers_normal = {"Authorization": f"Bearer {normal_user_token}"}
+    headers_normal2 = {"Authorization": f"Bearer {normal_user2_token}"}
     
-    # Admin creates patient and screening
-    p_res = client.post("/patients/", json={"age_band": "60-70", "sex": "F", "village_code": "V002", "consent_flag": True}, headers=headers_admin)
-    scr_res = client.post("/screenings/", json={"patient_id": p_res.json()["id"], "pain_score": 5, "stiffness_score": 2, "function_score": 10}, headers=headers_admin)
+    # Worker 1 creates patient and screening
+    p_res = client.post("/patients/", json={"age_band": "60-70", "sex": "F", "village_code": "V002", "consent_flag": True}, headers=headers_normal)
+    scr_res = client.post("/screenings/", json={"patient_id": p_res.json()["id"], "pain_score": 5, "stiffness_score": 2, "function_score": 10}, headers=headers_normal)
     scr_id = scr_res.json()["id"]
     
-    # Normal user tries to update follow-up
-    patch_res = client.patch(f"/screenings/{scr_id}/followup", json={"followup_status": "completed"}, headers=headers_normal)
+    # Worker 2 tries to update follow-up
+    patch_res = client.patch(f"/screenings/{scr_id}/followup", json={"followup_status": "completed"}, headers=headers_normal2)
     assert patch_res.status_code == 403
 
-def test_audit_logs_no_health_data(client, admin_token):
-    headers = {"Authorization": f"Bearer {admin_token}"}
-    p_res = client.post("/patients/", json={"age_band": "60-70", "sex": "F", "village_code": "V002", "consent_flag": True}, headers=headers)
+def test_audit_logs_no_health_data(client, normal_user_token, admin_token):
+    headers_normal = {"Authorization": f"Bearer {normal_user_token}"}
+    headers_admin = {"Authorization": f"Bearer {admin_token}"}
+    
+    p_res = client.post("/patients/", json={"age_band": "60-70", "sex": "F", "village_code": "V002", "consent_flag": True}, headers=headers_normal)
     p_id = p_res.json()["id"]
     
-    scr_res = client.post("/screenings/", json={"patient_id": p_id, "pain_score": 9, "stiffness_score": 9, "function_score": 9}, headers=headers)
+    scr_res = client.post("/screenings/", json={"patient_id": p_id, "pain_score": 9, "stiffness_score": 9, "function_score": 9}, headers=headers_normal)
     s_id = scr_res.json()["id"]
     
-    logs_res = client.get("/admin/audit-logs", headers=headers)
+    logs_res = client.get("/admin/audit-logs", headers=headers_admin)
     assert logs_res.status_code == 200
     logs = logs_res.json()["items"]
     

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Globe, Shield, Database, Bell, LogOut, ChevronRight, Terminal } from 'lucide-react';
+import { Globe, Shield, Database, Bell, LogOut, ChevronRight, Terminal } from 'lucide-react';
+import { logout } from '../utils/auth';
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -13,18 +14,7 @@ export default function Settings() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
-      <header className="bg-white/80 backdrop-blur-md border-b border-slate-200 sticky top-0 z-20">
-        <div className="mx-auto flex h-16 max-w-3xl items-center px-4 sm:px-6">
-          <button onClick={() => navigate('/dashboard')} className="mr-4 p-2 -ml-2 rounded-xl text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-all">
-            <ChevronLeft className="h-6 w-6" />
-          </button>
-          <div className="flex-1">
-            <h1 className="text-xl font-extrabold text-slate-800 tracking-tight">App Settings</h1>
-          </div>
-        </div>
-      </header>
-
+    <div className="flex flex-col font-sans">
       <main className="flex-1 mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 space-y-8">
         
         {/* Profile Card */}
@@ -111,8 +101,7 @@ export default function Settings() {
         <div className="pt-6 animate-fade-in-up-delay-2">
           <button 
             onClick={() => {
-              localStorage.removeItem('token');
-              navigate('/login');
+              logout();
             }}
             className="w-full flex items-center justify-center p-5 rounded-2xl bg-white border-2 border-rose-100 text-rose-600 font-bold hover:bg-rose-50 hover:border-rose-200 transition-colors group shadow-sm"
           >

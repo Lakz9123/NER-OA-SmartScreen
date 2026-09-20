@@ -11,12 +11,21 @@ export const resetSyncingItems = async () => {
 
 export const syncOutbox = async (isBackground: boolean = false) => {
   // Reset any stuck items just in case (though typically called on startup)
-  
+  const userStr = localStorage.getItem('user');
+  const loggedInUser = userStr ? JSON.parse(userStr) : null;
+  if (!loggedInUser) return { success: false, message: 'Not logged in' };
+
+  // Items without an owner_id get the current user's id assigned once
+  const unownedItems = await db.outbox.filter(o => !o.owner_id).toArray();
+  for (const item of unownedItems) {
+    await db.outbox.update(item.id!, { owner_id: loggedInUser.id });
+  }
+
   let pendingItems = [];
   if (isBackground) {
-    pendingItems = await db.outbox.where('status').equals('pending').toArray();
+    pendingItems = await db.outbox.filter(o => o.status === 'pending' && o.owner_id === loggedInUser.id).toArray();
   } else {
-    pendingItems = await db.outbox.where('status').anyOf('pending', 'failed').toArray();
+    pendingItems = await db.outbox.filter(o => (o.status === 'pending' || o.status === 'failed') && o.owner_id === loggedInUser.id).toArray();
   }
     
   if (pendingItems.length === 0) {

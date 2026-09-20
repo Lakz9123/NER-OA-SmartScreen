@@ -7,10 +7,18 @@ async function fetchWithAuth(url: string, options: RequestInit = {}) {
     headers.set('Authorization', `Bearer ${token}`);
   }
   
-  const response = await fetch(`${API_BASE_URL}${url}`, {
-    ...options,
-    headers,
-  });
+  let response;
+  try {
+    response = await fetch(`${API_BASE_URL}${url}`, {
+      ...options,
+      headers,
+    });
+  } catch (error: any) {
+    if (error instanceof TypeError && error.message === 'Failed to fetch') {
+      throw new Error('Cannot reach the server. Check your internet or try again.');
+    }
+    throw error;
+  }
   
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
