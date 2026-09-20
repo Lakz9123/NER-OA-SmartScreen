@@ -16,11 +16,11 @@ export interface QualityAssessment {
   };
 }
 
-export function assessCaptureQuality(frames: Landmark[][]): QualityAssessment {
-  if (!frames || frames.length === 0) {
+export function assessCaptureQuality(frames: Landmark[][], timestamps: number[]): QualityAssessment {
+  if (!frames || frames.length === 0 || frames.length !== timestamps.length) {
     return {
       is_good: false,
-      reason: "No video frames were captured.",
+      reason: "No motion data captured.",
       score: 0,
       metrics: { hipsVisible: 0, kneesVisible: 0, anklesVisible: 0, wholeBodyInFrame: false, frameCount: 0, stepCount: 0 }
     };
@@ -61,10 +61,8 @@ export function assessCaptureQuality(frames: Landmark[][]): QualityAssessment {
     }
   }
 
-  // Use shared step detection algorithm
-  // Assume a consistent framerate (e.g. 15 FPS) for timestamps if real ones aren't provided
-  const assumedTimestamps = frames.map((_, i) => i * (1000 / 15));
-  const { stepCount } = detectSteps(frames, assumedTimestamps);
+  // Use shared step detection algorithm with real timestamps
+  const { stepCount } = detectSteps(frames, timestamps);
 
   const frameCount = frames.length;
   const hipsVisiblePct = hipsVisibleCount / frameCount;

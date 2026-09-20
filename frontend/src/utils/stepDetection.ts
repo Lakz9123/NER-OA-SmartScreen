@@ -45,14 +45,20 @@ export function detectSteps(frames: Landmark[][], timestamps: number[]): StepRes
     }
   }
 
-  // 2. Smooth with moving average
-  const windowSize = captureConfig.STEP_DETECTION.MOVING_AVERAGE_WINDOW;
+  // 2. Smooth with time-based moving average
+  const windowMs = captureConfig.STEP_DETECTION.MOVING_AVERAGE_WINDOW_MS;
   const smoothedDistances: number[] = [];
   
   for (let i = 0; i < rawDistances.length; i++) {
+    const currentTime = timestamps[i];
     let sum = 0;
     let count = 0;
-    for (let j = Math.max(0, i - windowSize + 1); j <= i; j++) {
+    
+    // Look back in time up to windowMs
+    for (let j = i; j >= 0; j--) {
+      if (currentTime - timestamps[j] > windowMs) {
+        break;
+      }
       sum += rawDistances[j];
       count++;
     }

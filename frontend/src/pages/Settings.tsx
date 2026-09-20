@@ -1,8 +1,16 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Globe, Shield, Database, Bell, LogOut, ChevronRight } from 'lucide-react';
+import { ChevronLeft, Globe, Shield, Database, Bell, LogOut, ChevronRight, Terminal } from 'lucide-react';
 
 export default function Settings() {
   const navigate = useNavigate();
+  const [devMode, setDevMode] = useState(localStorage.getItem('devMode') === 'true');
+
+  const toggleDevMode = () => {
+    const newState = !devMode;
+    setDevMode(newState);
+    localStorage.setItem('devMode', String(newState));
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
@@ -76,12 +84,24 @@ export default function Settings() {
                 </div>
               </button>
               
-              <button className="w-full flex items-center justify-between p-5 hover:bg-slate-50 transition-colors group">
+              <button className="w-full flex items-center justify-between p-5 border-b border-slate-50 hover:bg-slate-50 transition-colors group">
                 <div className="flex items-center">
                   <Shield className="h-5 w-5 text-slate-400 mr-4 group-hover:text-teal-600 transition-colors" />
                   <span className="font-bold text-slate-700 group-hover:text-slate-900">Privacy Policy</span>
                 </div>
                 <ChevronRight className="h-4 w-4 text-slate-400" />
+              </button>
+              
+              <button onClick={toggleDevMode} className="w-full flex items-center justify-between p-5 hover:bg-slate-50 transition-colors group">
+                <div className="flex items-center">
+                  <Terminal className="h-5 w-5 text-slate-400 mr-4 group-hover:text-teal-600 transition-colors" />
+                  <span className="font-bold text-slate-700 group-hover:text-slate-900">Developer Mode</span>
+                </div>
+                <div className="flex items-center">
+                  <div className={`w-12 h-6 rounded-full p-1 transition-colors ${devMode ? 'bg-teal-500' : 'bg-slate-200'}`}>
+                    <div className={`w-4 h-4 rounded-full bg-white transition-transform ${devMode ? 'translate-x-6' : 'translate-x-0'}`} />
+                  </div>
+                </div>
               </button>
             </div>
           </div>

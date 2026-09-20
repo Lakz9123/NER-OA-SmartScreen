@@ -15,7 +15,7 @@ export const captureConfig = {
   // Step Detection Tuning
   // The step detection uses relative distance between the ankles and the hip midpoint.
   STEP_DETECTION: {
-    MOVING_AVERAGE_WINDOW: 5,   // Number of frames to smooth over
+    MOVING_AVERAGE_WINDOW_MS: 200,   // Milliseconds to smooth over
     MIN_TIME_BETWEEN_STEPS_MS: 300, // Minimum time (ms) to wait before detecting another step
     PROMINENCE_THRESHOLD: 0.08, // The minimum relative X-distance to count as a step peak
   }

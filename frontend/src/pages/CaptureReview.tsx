@@ -115,7 +115,7 @@ export default function CaptureReview() {
 
         <div className="bg-slate-900 rounded-3xl border border-slate-800 p-6 sm:p-8 mb-auto animate-fade-in-up-delay-1 shadow-xl">
           <h3 className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-6 flex items-center">
-            <Activity className="h-4 w-4 mr-2 text-teal-500" /> Extracted Features
+            <Activity className="h-4 w-4 mr-2 text-teal-500" /> Indicative Measurements
           </h3>
           
           <div className="space-y-4 font-mono">
@@ -153,6 +153,12 @@ export default function CaptureReview() {
               </div>
             </div>
 
+          </div>
+
+          <div className="mt-6 p-4 bg-slate-950/50 rounded-xl border border-slate-800">
+            <p className="text-xs text-slate-400 font-medium leading-relaxed">
+              <span className="text-amber-500 font-bold">Note:</span> Symmetry and angles are measured from a single-side 2D view and are indicative only. This is a screening aid, not a diagnosis.
+            </p>
           </div>
         </div>
 

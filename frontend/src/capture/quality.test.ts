@@ -49,7 +49,8 @@ describe('Capture Quality Assessment', () => {
   it('passes a good capture with sufficient frames and steps', () => {
     // 60 frames (4s), ankles visible, in frame, has steps (approx 8 steps)
     const frames = generateFrames(60, true, true, true);
-    const result = assessCaptureQuality(frames);
+    const timestamps = frames.map((_, i) => i * (1000 / 15));
+    const result = assessCaptureQuality(frames, timestamps);
     
     expect(result.is_good).toBe(true);
     expect(result.score).toBe(100);
@@ -57,7 +58,8 @@ describe('Capture Quality Assessment', () => {
 
   it('fails when ankles are missing (legs cut off)', () => {
     const frames = generateFrames(60, false, true, true);
-    const result = assessCaptureQuality(frames);
+    const timestamps = frames.map((_, i) => i * (1000 / 15));
+    const result = assessCaptureQuality(frames, timestamps);
     
     expect(result.is_good).toBe(false);
     expect(result.reason).toContain('Legs were cut off');
@@ -66,7 +68,8 @@ describe('Capture Quality Assessment', () => {
 
   it('fails when subject is out of frame', () => {
     const frames = generateFrames(60, true, false, true);
-    const result = assessCaptureQuality(frames);
+    const timestamps = frames.map((_, i) => i * (1000 / 15));
+    const result = assessCaptureQuality(frames, timestamps);
     
     expect(result.is_good).toBe(false);
     expect(result.reason).toContain('out of frame');
@@ -75,7 +78,8 @@ describe('Capture Quality Assessment', () => {
 
   it('fails when too few steps are detected', () => {
     const frames = generateFrames(60, true, true, false); // No steps
-    const result = assessCaptureQuality(frames);
+    const timestamps = frames.map((_, i) => i * (1000 / 15));
+    const result = assessCaptureQuality(frames, timestamps);
     
     expect(result.is_good).toBe(false);
     expect(result.reason).toContain('Too few steps');
@@ -84,7 +88,8 @@ describe('Capture Quality Assessment', () => {
 
   it('fails when frame count is too low', () => {
     const frames = generateFrames(5, true, true, false);
-    const result = assessCaptureQuality(frames);
+    const timestamps = frames.map((_, i) => i * (1000 / 15));
+    const result = assessCaptureQuality(frames, timestamps);
     
     expect(result.is_good).toBe(false);
     expect(result.reason).toContain('too short');

@@ -12,7 +12,7 @@ export default function CaptureTracking() {
   const location = useLocation();
   const { patientId, answers } = location.state || { patientId: 'demo', answers: {} };
 
-  const isDebug = new URLSearchParams(location.search).get('debug') === '1';
+  const isDebug = new URLSearchParams(location.search).get('debug') === '1' || localStorage.getItem('devMode') === 'true';
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -224,7 +224,7 @@ export default function CaptureTracking() {
     setCaptureState('processing');
     
     // Evaluate quality before proceeding
-    const quality = assessCaptureQuality(trackerRef.current.rawFrames);
+    const quality = assessCaptureQuality(trackerRef.current.rawFrames, trackerRef.current.timestamps);
     
     if (!quality.is_good) {
       navigate('/capture/recapture', { state: { patientId, answers, reason: quality.reason } });
@@ -245,8 +245,8 @@ export default function CaptureTracking() {
   // Debug Data
   let debugScore = 0;
   let debugMetrics: any = {};
-  if (isDebug && captureState === 'recording') {
-    const q = assessCaptureQuality(trackerRef.current.rawFrames);
+  if (isDebug && captureState === 'recording' && trackerRef.current.rawFrames.length > 0) {
+    const q = assessCaptureQuality(trackerRef.current.rawFrames, trackerRef.current.timestamps);
     debugScore = q.score;
     debugMetrics = q.metrics;
   }
