@@ -29,25 +29,39 @@ data = {
 
 df = pd.DataFrame(data)
 
-# Synthetic Risk Target (0 = Low, 1 = Moderate/High)
-# Higher pain, higher stiffness, lower ROM, lower cadence = higher risk
-risk_score = (
+# Synthetic Risk Target
+# Combine all features to represent realistic risk factors
+# Higher pain/stiffness/function, lower ROM, lower cadence, higher step time, lower symmetry = higher risk
+raw_score = (
     df['pain_score'] * 0.3 + 
     (df['stiffness_score'] - 1) * 2 + 
     df['function_score'] * 0.2 - 
-    (df['knee_rom_left'] - 120) * 0.05 - 
-    (df['cadence'] - 100) * 0.05
+    (df['knee_rom_left'] - 120) * 0.02 - 
+    (df['knee_rom_right'] - 120) * 0.02 +
+    (10 - df['knee_angle_left']) * 0.05 +
+    (10 - df['knee_angle_right']) * 0.05 -
+    (df['symmetry_index'] - 0.9) * 10 -
+    (df['cadence'] - 100) * 0.03 +
+    (df['step_time'] - 0.6) * 5
 )
 
-# Threshold for binary classification
-df['target'] = (risk_score > np.percentile(risk_score, 60)).astype(int)
+# Standardize raw_score and apply sigmoid to get a true probability
+mean_score = raw_score.mean()
+std_score = raw_score.std()
+scaled_score = (raw_score - mean_score) / (std_score + 1e-6)
+
+# Shift and scale sigmoid to get a good spread
+probabilities = 1 / (1 + np.exp(-scaled_score * 1.5))
+
+# Sample the target label based on the probabilities to introduce realistic noise
+df['target'] = np.random.binomial(1, probabilities)
 
 X = df.drop('target', axis=1)
 y = df['target']
 
 pipeline = Pipeline([
     ('scaler', StandardScaler()),
-    ('classifier', LogisticRegression(class_weight='balanced'))
+    ('classifier', LogisticRegression(C=0.5, class_weight='balanced'))
 ])
 
 pipeline.fit(X, y)
@@ -56,3 +70,15 @@ os.makedirs('ml', exist_ok=True)
 joblib.dump(pipeline, 'ml/model.pkl')
 
 print("Model saved to ml/model.pkl successfully.")
+
+# Evaluate distribution on the synthetic data
+predicted_probs = pipeline.predict_proba(X)[:, 1]
+low = np.sum(predicted_probs < 0.4)
+moderate = np.sum((predicted_probs >= 0.4) & (predicted_probs < 0.7))
+high = np.sum(predicted_probs >= 0.7)
+
+total = len(predicted_probs)
+print("\nRisk Distribution on Synthetic Data:")
+print(f"Low (<0.4):      {low} ({low/total*100:.1f}%)")
+print(f"Moderate (0.4-0.7): {moderate} ({moderate/total*100:.1f}%)")
+print(f"High (>=0.7):    {high} ({high/total*100:.1f}%)")

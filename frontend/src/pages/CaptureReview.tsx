@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Check, X, RefreshCw, Activity, Cpu, UploadCloud } from 'lucide-react';
-import { createScreening } from '../api/client';
+import { analyzeRisk } from '../risk/riskModel';
 
 export default function CaptureReview() {
   const navigate = useNavigate();
@@ -24,7 +24,7 @@ export default function CaptureReview() {
     setError('');
     const pain_score = answers.painLevel || 0;
     const stiffness_score = answers.stiffnessDuration === '>30' ? 2 : 1;
-    const function_score = Object.values(answers.mobility || {}).reduce((a: any, b: any) => a + b, 0);
+    const function_score = Object.values(answers.mobility || {}).reduce((a: any, b: any) => a + b, 0) as number;
 
     const payload = {
       patient_id: patientId,
@@ -41,27 +41,21 @@ export default function CaptureReview() {
     };
 
     try {
-      const response = await createScreening(payload);
+      const localRisk = await analyzeRisk(payload);
       
-      // Navigate to analysis with the real screening result
-      navigate('/analysis', { state: { result: response } });
+      const localResult = {
+        ...payload,
+        id: Date.now().toString(), // Temporary ID for Part A
+        risk_level: localRisk.risk_level,
+        risk_score: localRisk.risk_score,
+        model_version: localRisk.model_version,
+        explainability_data: localRisk.explainability_data,
+        timestamp: new Date().toISOString()
+      };
+
+      navigate('/analysis', { state: { result: localResult } });
     } catch (err: any) {
-      setError(err.message || "Device offline. Queuing for sync.");
-      
-      const offlineQueue = JSON.parse(localStorage.getItem('offlineQueue') || '[]');
-      offlineQueue.push({
-        id: Date.now().toString(),
-        type: 'Screening Result',
-        name: `Patient ${patientId.substring(0, 4)}`, // Simplified name for offline UI
-        timestamp: new Date().toISOString(),
-        payload: payload
-      });
-      localStorage.setItem('offlineQueue', JSON.stringify(offlineQueue));
-      
-      // Give the user a moment to read the error before redirecting
-      setTimeout(() => {
-        navigate('/offline-queue');
-      }, 2000);
+      setError("Failed to compute risk locally: " + err.message);
     }
   };
 

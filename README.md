@@ -45,7 +45,8 @@ cd frontend
 npm install
 ```
 
-Create a `.env` file (see `.env.example`) and point `VITE_API_BASE_URL` to the backend.
+Create a `.env` file (see `.env.example`) and configure `VITE_API_BASE_URL`.
+Use `/api` when testing through the proxy or tunnel, and `http://localhost:8000` when calling the backend directly.
 
 Run the frontend:
 ```bash
@@ -53,3 +54,26 @@ npm run dev
 ```
 
 The app will be available at `http://localhost:5173`.
+
+### 3. Test on a phone (via Cloudflare Tunnel)
+You can test the app on your mobile device by exposing the local frontend via an HTTPS tunnel (HTTPS is required for camera access).
+
+Steps:
+1. Run the backend:
+   ```bash
+   uvicorn app.main:app --port 8000
+   ```
+2. Run the frontend:
+   ```bash
+   npm run dev
+   ```
+3. Run the tunnel:
+   ```bash
+   cloudflared tunnel --url http://localhost:5173
+   ```
+4. Open the printed `https://...trycloudflare.com` link on your phone.
+
+**Troubleshooting:**
+- **Blocked Host:** Ensure `allowedHosts: true` is set in `vite.config.ts`.
+- **Login Failure:** Ensure backend CORS is set to allow `*` (only for local testing).
+- **Camera Permission:** Must use the `https` tunnel link, as browsers block camera access on `http` (except `localhost`).

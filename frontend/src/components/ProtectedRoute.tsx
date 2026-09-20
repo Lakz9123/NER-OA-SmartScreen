@@ -1,8 +1,5 @@
 import { Navigate, Outlet } from 'react-router-dom';
 
-interface ProtectedRouteProps {
-  requiredRole?: string;
-}
 
 export default function ProtectedRoute() {
   const token = localStorage.getItem('token');
