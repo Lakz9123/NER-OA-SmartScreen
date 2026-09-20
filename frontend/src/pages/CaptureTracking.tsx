@@ -1,28 +1,61 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { PoseLandmarker, FilesetResolver, DrawingUtils } from '@mediapipe/tasks-vision';
-import { X, Activity, Scan, AlertTriangle, RefreshCw } from 'lucide-react';
+import { X, Activity, Scan, AlertTriangle, RefreshCw, Info } from 'lucide-react';
 import { KinematicsTracker } from '../utils/kinematics';
-import type { Landmark } from '../utils/kinematics';
+import type { Landmark } from '../utils/types';
 import { assessCaptureQuality } from '../capture/quality';
+import { captureConfig } from '../config/captureConfig';
 
 export default function CaptureTracking() {
   const navigate = useNavigate();
   const location = useLocation();
   const { patientId, answers } = location.state || { patientId: 'demo', answers: {} };
 
+  const isDebug = new URLSearchParams(location.search).get('debug') === '1';
+
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   
   const [isInitializing, setIsInitializing] = useState(true);
-  const [isRecording, setIsRecording] = useState(false);
-  const [progress, setProgress] = useState(0);
+  
+  // States: 'idle' -> 'countdown' -> 'recording' -> 'processing'
+  const [captureState, setCaptureState] = useState<'idle' | 'countdown' | 'recording' | 'processing'>('idle');
+  const [countdown, setCountdown] = useState(captureConfig.COUNTDOWN_DURATION_SEC);
+  const [timeRemaining, setTimeRemaining] = useState(captureConfig.RECORDING_DURATION_MS / 1000);
+  
   const [modelError, setModelError] = useState('');
   const [retryTrigger, setRetryTrigger] = useState(0);
 
   const trackerRef = useRef<KinematicsTracker>(new KinematicsTracker());
-  const isRecordingRef = useRef(false);
+  const captureStateRef = useRef(captureState);
+  
+  // Live status for HUD (synced to state periodically to avoid 30fps re-renders)
+  const liveStatusRef = useRef({
+    anklesVisible: false,
+    kneesVisible: false,
+    outOfBounds: false,
+    hipsVisible: false,
+  });
+  const [uiStatus, setUiStatus] = useState({
+    anklesVisible: false,
+    kneesVisible: false,
+    outOfBounds: false,
+    hipsVisible: false,
+  });
+
+  useEffect(() => {
+    captureStateRef.current = captureState;
+  }, [captureState]);
+
+  // Periodic UI update loop for live status
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setUiStatus({ ...liveStatusRef.current });
+    }, 250);
+    return () => clearInterval(interval);
+  }, []);
 
   // Setup Camera and MediaPipe
   useEffect(() => {
@@ -33,13 +66,11 @@ export default function CaptureTracking() {
       try {
         let stream: MediaStream;
         try {
-          // Try to get environment camera first (rear camera) - Lower resolution for performance
           stream = await navigator.mediaDevices.getUserMedia({ 
             video: { facingMode: { ideal: 'environment' }, width: { ideal: 640 }, height: { ideal: 480 } } 
           });
         } catch (camErr) {
           console.warn("Could not get environment camera, falling back to default:", camErr);
-          // Fallback to any available camera
           stream = await navigator.mediaDevices.getUserMedia({ video: true });
         }
         streamRef.current = stream;
@@ -75,13 +106,11 @@ export default function CaptureTracking() {
         setModelError('');
         setIsInitializing(false);
 
-        // Rendering loop with FPS throttling for mobile performance
         let lastFrameTime = 0;
         const TARGET_FPS = 15;
         const frameInterval = 1000 / TARGET_FPS;
 
         const renderLoop = async (timestamp: number) => {
-          // Throttle FPS to prevent UI blocking on mobile
           if (timestamp - lastFrameTime < frameInterval) {
             animationFrameId = requestAnimationFrame(renderLoop);
             return;
@@ -104,15 +133,30 @@ export default function CaptureTracking() {
                 const results = poseLandmarker.detectForVideo(video, startTimeMs);
                 
                 if (results.landmarks && results.landmarks.length > 0) {
+                  const frame = results.landmarks[0] as unknown as Landmark[];
                   const drawingUtils = new DrawingUtils(ctx);
-                  for (const landmark of results.landmarks) {
-                    drawingUtils.drawConnectors(landmark, PoseLandmarker.POSE_CONNECTIONS, { color: '#2dd4bf', lineWidth: 4 });
-                    drawingUtils.drawLandmarks(landmark, { color: '#14b8a6', radius: 4, fillColor: '#ccfbf1', lineWidth: 2 });
-                  }
+                  drawingUtils.drawConnectors(frame as any, PoseLandmarker.POSE_CONNECTIONS, { color: '#2dd4bf', lineWidth: 4 });
+                  drawingUtils.drawLandmarks(frame as any, { color: '#14b8a6', radius: 4, fillColor: '#ccfbf1', lineWidth: 2 });
                   
-                  if (isRecordingRef.current) {
-                    trackerRef.current.addFrame(results.landmarks[0] as unknown as Landmark[], performance.now());
+                  if (captureStateRef.current === 'recording') {
+                    trackerRef.current.addFrame(frame, startTimeMs);
                   }
+
+                  // Update live status for hints
+                  const minVis = captureConfig.MIN_LANDMARK_VISIBILITY;
+                  const lHip = frame[23]; const rHip = frame[24];
+                  const lKnee = frame[25]; const rKnee = frame[26];
+                  const lAnkle = frame[27]; const rAnkle = frame[28];
+                  const lShoulder = frame[11]; const rShoulder = frame[12];
+
+                  liveStatusRef.current = {
+                    hipsVisible: lHip.visibility > minVis && rHip.visibility > minVis,
+                    kneesVisible: lKnee.visibility > minVis && rKnee.visibility > minVis,
+                    anklesVisible: lAnkle.visibility > minVis && rAnkle.visibility > minVis,
+                    outOfBounds: [lShoulder, rShoulder, lHip, rHip, lKnee, rKnee, lAnkle, rAnkle].some(
+                      l => l.visibility > minVis && (l.x < 0.0 || l.x > 1.0 || l.y < 0.0 || l.y > 1.0)
+                    )
+                  };
                 }
               }
             }
@@ -140,38 +184,72 @@ export default function CaptureTracking() {
     };
   }, [retryTrigger]);
 
-  const handleStartRecording = () => {
-    setIsRecording(true);
-    isRecordingRef.current = true;
-    trackerRef.current = new KinematicsTracker(); // Reset tracker
-    let currentProgress = 0;
+  const handleStartCaptureFlow = () => {
+    setCaptureState('countdown');
+    setCountdown(captureConfig.COUNTDOWN_DURATION_SEC);
     
-    // Simulate a 5-second capture
-    const interval = setInterval(() => {
-      currentProgress += 5; // 20 ticks of 250ms = 5000ms
-      setProgress(currentProgress);
-      
-      if (currentProgress >= 100) {
-        clearInterval(interval);
-        isRecordingRef.current = false;
+    // Countdown phase
+    let currentCountdown = captureConfig.COUNTDOWN_DURATION_SEC;
+    const countdownInterval = setInterval(() => {
+      currentCountdown -= 1;
+      setCountdown(currentCountdown);
+      if (currentCountdown <= 0) {
+        clearInterval(countdownInterval);
+        startRecording();
+      }
+    }, 1000);
+  };
 
-        // Evaluate quality before proceeding
-        const quality = assessCaptureQuality(trackerRef.current.rawFrames);
-        
-        if (!quality.is_good) {
-          navigate('/capture/recapture', { state: { patientId, answers, reason: quality.reason } });
-        } else {
-          // Send real telemetry data and quality score to next screen
-          const telemetryData = { ...trackerRef.current.getMetrics(), quality_score: quality.score };
-          navigate('/capture/review', { state: { patientId, answers, telemetryData } });
-        }
+  const startRecording = () => {
+    setCaptureState('recording');
+    trackerRef.current = new KinematicsTracker(); 
+    
+    const durationMs = captureConfig.RECORDING_DURATION_MS;
+    setTimeRemaining(durationMs / 1000);
+    const startMs = performance.now();
+
+    const recordingInterval = setInterval(() => {
+      const elapsed = performance.now() - startMs;
+      const remaining = Math.max(0, (durationMs - elapsed) / 1000);
+      setTimeRemaining(Math.ceil(remaining));
+
+      if (elapsed >= durationMs) {
+        clearInterval(recordingInterval);
+        finishRecording();
       }
     }, 250);
+  };
+
+  const finishRecording = () => {
+    setCaptureState('processing');
+    
+    // Evaluate quality before proceeding
+    const quality = assessCaptureQuality(trackerRef.current.rawFrames);
+    
+    if (!quality.is_good) {
+      navigate('/capture/recapture', { state: { patientId, answers, reason: quality.reason } });
+    } else {
+      const telemetryData = { ...trackerRef.current.getMetrics(), quality_score: quality.score };
+      navigate('/capture/review', { state: { patientId, answers, telemetryData } });
+    }
   };
 
   const handleCancel = () => {
     navigate(-1);
   };
+
+  // Compute live warnings based on uiStatus
+  const showMoveBack = uiStatus.outOfBounds;
+  const showLegsCutOff = !uiStatus.anklesVisible || !uiStatus.kneesVisible;
+
+  // Debug Data
+  let debugScore = 0;
+  let debugMetrics: any = {};
+  if (isDebug && captureState === 'recording') {
+    const q = assessCaptureQuality(trackerRef.current.rawFrames);
+    debugScore = q.score;
+    debugMetrics = q.metrics;
+  }
 
   return (
     <div className="h-screen bg-black flex flex-col font-sans overflow-hidden relative">
@@ -186,15 +264,17 @@ export default function CaptureTracking() {
         
         <div className="flex flex-col items-end space-y-3 pointer-events-auto">
           <div className="bg-slate-900/50 backdrop-blur-md px-4 py-2 rounded-xl text-white border border-white/10 flex items-center shadow-lg">
-            <div className="w-2 h-2 rounded-full bg-rose-500 animate-pulse mr-2"></div>
-            <span className="font-mono text-sm tracking-wider">{isRecording ? 'CAPTURING' : 'STANDBY'}</span>
+            <div className={`w-2 h-2 rounded-full mr-2 ${captureState === 'recording' ? 'bg-rose-500 animate-pulse' : 'bg-slate-500'}`}></div>
+            <span className="font-mono text-sm tracking-wider">
+              {captureState === 'idle' ? 'STANDBY' : captureState === 'countdown' ? 'PREPARING' : captureState === 'recording' ? 'RECORDING' : 'PROCESSING'}
+            </span>
           </div>
           
-          {isRecording && (
+          {captureState === 'recording' && (
             <div className="bg-slate-900/50 backdrop-blur-md p-3 rounded-xl border border-teal-500/30 w-32 flex flex-col items-center">
               <Activity className="h-5 w-5 text-teal-400 mb-1" />
-              <span className="font-mono text-teal-400 text-xs">Tracking</span>
-              <span className="font-mono text-white text-lg font-bold">{progress}%</span>
+              <span className="font-mono text-teal-400 text-xs">Time Left</span>
+              <span className="font-mono text-white text-lg font-bold">{timeRemaining}s</span>
             </div>
           )}
         </div>
@@ -244,11 +324,6 @@ export default function CaptureTracking() {
             <div className="absolute bottom-8 left-8 w-16 h-16 border-b-4 border-l-4 border-teal-500/70 rounded-bl-xl"></div>
             <div className="absolute bottom-8 right-8 w-16 h-16 border-b-4 border-r-4 border-teal-500/70 rounded-br-xl"></div>
             
-            {/* Scanning Laser */}
-            {isRecording && (
-              <div className="absolute top-0 left-0 w-full h-1 bg-teal-400 shadow-[0_0_15px_rgba(45,212,191,1)] animate-[laser-scan_2s_linear_infinite]"></div>
-            )}
-            
             {/* Rule of Thirds Grid */}
             <div className="absolute top-1/3 left-0 w-full h-[1px] bg-white/10"></div>
             <div className="absolute top-2/3 left-0 w-full h-[1px] bg-white/10"></div>
@@ -257,34 +332,68 @@ export default function CaptureTracking() {
           </div>
         </div>
 
+        {/* Countdown Overlay */}
+        {captureState === 'countdown' && (
+          <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+            <span className="text-white text-9xl font-black font-mono animate-ping">{countdown}</span>
+          </div>
+        )}
+
+        {/* Live Warnings Overlay */}
+        {(captureState === 'idle' || captureState === 'recording') && !isInitializing && (
+          <div className="absolute bottom-10 left-0 w-full flex flex-col items-center space-y-2 z-20 pointer-events-none">
+            {showMoveBack && (
+              <div className="bg-rose-600/90 text-white px-6 py-2 rounded-full font-bold shadow-lg animate-pulse">
+                Move Back! (Subject out of frame)
+              </div>
+            )}
+            {showLegsCutOff && (
+              <div className="bg-amber-600/90 text-white px-6 py-2 rounded-full font-bold shadow-lg">
+                Legs cut off!
+              </div>
+            )}
+            {!showMoveBack && !showLegsCutOff && uiStatus.hipsVisible && (
+              <div className="bg-teal-600/80 text-white px-6 py-2 rounded-full font-bold shadow-lg">
+                Subject in Frame
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Debug Overlay */}
+        {isDebug && captureState === 'recording' && (
+          <div className="absolute top-24 left-6 bg-black/70 border border-teal-500/50 p-4 rounded-xl text-teal-300 font-mono text-xs z-30 pointer-events-none space-y-1">
+            <div className="flex items-center text-teal-400 font-bold mb-2 text-sm"><Info className="h-4 w-4 mr-1"/> Debug Mode</div>
+            <p>Score: {debugScore}/100</p>
+            <p>Steps: {debugMetrics.stepCount || 0}</p>
+            <p>Frames: {debugMetrics.frameCount || 0}</p>
+            <p>Ankles Vis: {(debugMetrics.anklesVisible * 100 || 0).toFixed(1)}%</p>
+            <p>Knees Vis: {(debugMetrics.kneesVisible * 100 || 0).toFixed(1)}%</p>
+            <p>In Frame: {debugMetrics.wholeBodyInFrame ? 'YES' : 'NO'}</p>
+          </div>
+        )}
+
       </div>
 
       {/* Bottom Controls */}
-      <div className="bg-slate-950 p-8 flex flex-col items-center justify-center border-t border-slate-900 z-20">
-        {!isRecording ? (
+      <div className="bg-slate-950 p-8 flex flex-col items-center justify-center border-t border-slate-900 z-20 h-40">
+        {captureState === 'idle' ? (
           <button 
-            onClick={handleStartRecording}
+            onClick={handleStartCaptureFlow}
             disabled={isInitializing || !!modelError}
             className="group relative flex items-center justify-center w-20 h-20 bg-transparent border-4 border-white rounded-full hover:border-teal-400 transition-colors disabled:opacity-50"
           >
             <div className="w-14 h-14 bg-white rounded-full group-hover:bg-teal-400 transition-colors group-hover:scale-90"></div>
           </button>
         ) : (
-          <div className="w-full max-w-md">
-            <div className="flex justify-between text-teal-400 font-mono text-xs mb-2">
-              <span>EXTRACTING KINEMATICS...</span>
-              <span>{progress}%</span>
-            </div>
-            <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden border border-slate-700">
-              <div 
-                className="h-full bg-teal-500 shadow-[0_0_10px_rgba(20,184,166,0.8)] transition-all duration-300"
-                style={{ width: `${progress}%` }}
-              ></div>
-            </div>
+          <div className="w-full max-w-md text-center">
+            <p className="text-teal-400 font-mono font-bold animate-pulse">
+              {captureState === 'countdown' ? 'PREPARING...' : captureState === 'processing' ? 'PROCESSING DATA...' : 'RECORDING...'}
+            </p>
           </div>
         )}
-        <p className="text-slate-500 text-sm mt-6 font-medium">
-          {!isRecording ? 'Ask the patient to walk back and forth. Tap to capture.' : 'Patient is walking... Keep device steady.'}
+        <p className="text-slate-500 text-sm mt-6 font-medium text-center">
+          {captureState === 'idle' ? 'Ask patient to walk. Tap to begin countdown.' : 'Patient should walk side-to-side across the screen.'}
         </p>
       </div>
 

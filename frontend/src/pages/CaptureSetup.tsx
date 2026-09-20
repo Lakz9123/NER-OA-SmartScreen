@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ChevronLeft, Camera, Smartphone, Move, ShieldAlert, ArrowRight, ScanLine } from 'lucide-react';
+import { ChevronLeft, Camera, Smartphone, Move, ArrowRight, ScanLine } from 'lucide-react';
 
 export default function CaptureSetup() {
   const navigate = useNavigate();
@@ -65,8 +65,8 @@ export default function CaptureSetup() {
               <Smartphone className="h-6 w-6" />
             </div>
             <div>
-              <h3 className="text-white font-bold text-lg mb-1">Position Device</h3>
-              <p className="text-slate-400 text-sm leading-relaxed">Place the phone horizontally at waist height. Ensure it is stable and not moving.</p>
+              <h3 className="text-white font-bold text-lg mb-1">1. Set Up Phone</h3>
+              <p className="text-slate-400 text-sm leading-relaxed">Put the phone on a stand at <strong>hip height</strong>. Point the camera at the side of the walking path.</p>
             </div>
           </div>
 
@@ -75,18 +75,18 @@ export default function CaptureSetup() {
               <Move className="h-6 w-6" />
             </div>
             <div>
-              <h3 className="text-white font-bold text-lg mb-1">Clear Pathway</h3>
-              <p className="text-slate-400 text-sm leading-relaxed">Ensure a well-lit, clear path of at least 3 meters for the patient to walk back and forth.</p>
+              <h3 className="text-white font-bold text-lg mb-1">2. Keep Distance</h3>
+              <p className="text-slate-400 text-sm leading-relaxed">The phone must be <strong>2.5 to 3 meters</strong> away from the patient.</p>
             </div>
           </div>
 
           <div className="bg-slate-900 p-6 rounded-2xl border border-slate-800 flex items-start space-x-4 hover:border-slate-700 transition-colors">
             <div className="bg-slate-800 p-3 rounded-xl text-amber-400 mt-1 shadow-inner">
-              <ShieldAlert className="h-6 w-6" />
+              <ArrowRight className="h-6 w-6" />
             </div>
             <div>
-              <h3 className="text-white font-bold text-lg mb-1">Privacy Notice</h3>
-              <p className="text-slate-400 text-sm leading-relaxed">No video is recorded or sent to the cloud. Only telemetry data is extracted locally via edge computing.</p>
+              <h3 className="text-white font-bold text-lg mb-1">3. Walk Left to Right</h3>
+              <p className="text-slate-400 text-sm leading-relaxed">The patient must walk <strong>across the screen</strong> (left to right), not towards the camera. Recording takes 10 seconds.</p>
             </div>
           </div>
 

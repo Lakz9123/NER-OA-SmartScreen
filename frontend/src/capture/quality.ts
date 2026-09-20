@@ -1,4 +1,6 @@
-import type { Landmark } from '../utils/kinematics';
+import type { Landmark } from '../utils/types';
+import { detectSteps } from '../utils/stepDetection';
+import { captureConfig } from '../config/captureConfig';
 
 export interface QualityAssessment {
   is_good: boolean;
@@ -28,10 +30,6 @@ export function assessCaptureQuality(frames: Landmark[][]): QualityAssessment {
   let kneesVisibleCount = 0;
   let anklesVisibleCount = 0;
   let outOfBoundsCount = 0;
-
-  // Simple step detection
-  let stepCount = 0;
-  let isStepActive = false;
   
   for (const frame of frames) {
     if (frame.length < 33) continue;
@@ -53,7 +51,7 @@ export function assessCaptureQuality(frames: Landmark[][]): QualityAssessment {
     if (kneesVis) kneesVisibleCount++;
     if (anklesVis) anklesVisibleCount++;
 
-    // Check if body is in frame (shoulders to ankles should be within 0.0 to 1.0)
+    // Check if body is in frame
     const keyLandmarks = [leftShoulder, rightShoulder, leftHip, rightHip, leftKnee, rightKnee, leftAnkle, rightAnkle];
     const isOutOfBounds = keyLandmarks.some(l => 
       l.visibility > 0.5 && (l.x < 0.0 || l.x > 1.0 || l.y < 0.0 || l.y > 1.0)
@@ -61,18 +59,12 @@ export function assessCaptureQuality(frames: Landmark[][]): QualityAssessment {
     if (isOutOfBounds) {
       outOfBoundsCount++;
     }
-
-    // Naive step detection on raw frames to ensure enough steps were taken
-    if (anklesVis) {
-      const dist = Math.abs(leftAnkle.x - rightAnkle.x);
-      if (dist > 0.1 && !isStepActive) {
-        isStepActive = true;
-        stepCount++;
-      } else if (dist < 0.05 && isStepActive) {
-        isStepActive = false;
-      }
-    }
   }
+
+  // Use shared step detection algorithm
+  // Assume a consistent framerate (e.g. 15 FPS) for timestamps if real ones aren't provided
+  const assumedTimestamps = frames.map((_, i) => i * (1000 / 15));
+  const { stepCount } = detectSteps(frames, assumedTimestamps);
 
   const frameCount = frames.length;
   const hipsVisiblePct = hipsVisibleCount / frameCount;
@@ -85,19 +77,19 @@ export function assessCaptureQuality(frames: Landmark[][]): QualityAssessment {
   let reason = "Good capture quality.";
 
   // Thresholds
-  if (frameCount < 10) {
+  if (frameCount < captureConfig.MIN_FRAMES_FOR_VALID_CAPTURE) {
     is_good = false;
     reason = "Capture duration was too short.";
     score = 10;
-  } else if (anklesVisiblePct < 0.5 || kneesVisiblePct < 0.5) {
+  } else if (anklesVisiblePct < captureConfig.MIN_LEGS_VISIBLE_PCT || kneesVisiblePct < captureConfig.MIN_LEGS_VISIBLE_PCT) {
     is_good = false;
     reason = "Legs were cut off or not clearly visible in the frame.";
     score = Math.min(score, 30);
-  } else if (outOfBoundsPct > 0.3) {
+  } else if (outOfBoundsPct > captureConfig.MAX_OUT_OF_BOUNDS_PCT) {
     is_good = false;
     reason = "Subject moved out of frame too frequently.";
     score = Math.min(score, 40);
-  } else if (stepCount < 3) {
+  } else if (stepCount < captureConfig.MIN_STEPS_REQUIRED) {
     is_good = false;
     reason = "Too few steps detected. Please walk continuously.";
     score = Math.min(score, 50);

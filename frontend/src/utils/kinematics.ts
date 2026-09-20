@@ -1,9 +1,5 @@
-export interface Landmark {
-  x: number;
-  y: number;
-  z: number;
-  visibility: number;
-}
+import type { Landmark } from './types';
+import { detectSteps } from './stepDetection';
 
 export function calculateAngle(a: Landmark, b: Landmark, c: Landmark): number {
   const radians = Math.atan2(c.y - b.y, c.x - b.x) - Math.atan2(a.y - b.y, a.x - b.x);
@@ -19,12 +15,7 @@ export class KinematicsTracker {
   rightKneeAngles: number[] = [];
   timestamps: number[] = [];
   
-  // To estimate cadence (steps per minute)
-  ankleDistances: number[] = [];
-  stepCount = 0;
-  isStepActive = false;
-  stepTimestamps: number[] = [];
-  
+  // We no longer track steps natively here, we use the shared algorithm in getMetrics
   rawFrames: Landmark[][] = [];
 
   addFrame(landmarks: Landmark[], timestampMs: number) {
@@ -49,21 +40,6 @@ export class KinematicsTracker {
     }
 
     this.timestamps.push(timestampMs);
-
-    // Naive step detection based on distance between ankles along X-axis
-    if (leftAnkle.visibility > 0.5 && rightAnkle.visibility > 0.5) {
-      const dist = Math.abs(leftAnkle.x - rightAnkle.x);
-      this.ankleDistances.push(dist);
-
-      // Threshold for a step (very naive)
-      if (dist > 0.1 && !this.isStepActive) {
-        this.isStepActive = true;
-        this.stepCount++;
-        this.stepTimestamps.push(timestampMs);
-      } else if (dist < 0.05 && this.isStepActive) {
-        this.isStepActive = false;
-      }
-    }
   }
 
   getMetrics() {
@@ -77,7 +53,9 @@ export class KinematicsTracker {
       ? (this.timestamps[this.timestamps.length - 1] - this.timestamps[0]) / 1000 
       : 1;
 
-    const cadence = durationSeconds > 0 ? (this.stepCount / durationSeconds) * 60 : 0;
+    const { stepCount, stepTimestamps } = detectSteps(this.rawFrames, this.timestamps);
+
+    const cadence = durationSeconds > 0 ? (stepCount / durationSeconds) * 60 : 0;
     
     // Avg knee flexion during swing phase (simplified to just avg of maxes or overall avg)
     const avgLeftAngle = this.leftKneeAngles.length ? this.leftKneeAngles.reduce((a,b)=>a+b,0)/this.leftKneeAngles.length : 180;
@@ -85,10 +63,10 @@ export class KinematicsTracker {
 
     // Step time from timestamps of steps
     let step_time = 0;
-    if (this.stepTimestamps.length >= 2) {
+    if (stepTimestamps.length >= 2) {
       const stepDurations = [];
-      for (let i = 1; i < this.stepTimestamps.length; i++) {
-        stepDurations.push(this.stepTimestamps[i] - this.stepTimestamps[i-1]);
+      for (let i = 1; i < stepTimestamps.length; i++) {
+        stepDurations.push(stepTimestamps[i] - stepTimestamps[i-1]);
       }
       step_time = (stepDurations.reduce((a,b)=>a+b,0) / stepDurations.length) / 1000;
     }

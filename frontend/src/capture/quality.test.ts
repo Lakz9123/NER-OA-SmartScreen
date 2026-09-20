@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { assessCaptureQuality } from './quality';
-import type { Landmark } from '../utils/kinematics';
+import type { Landmark } from '../utils/types';
 
 const createMockLandmark = (x: number, y: number, visibility: number = 0.9): Landmark => ({ x, y, z: 0, visibility });
 
@@ -8,33 +8,37 @@ const generateFrames = (
   count: number,
   anklesVisible: boolean,
   inFrame: boolean,
-  steps: number
+  hasSteps: boolean
 ): Landmark[][] => {
   const frames: Landmark[][] = [];
+  const fps = 15;
 
   for (let i = 0; i < count; i++) {
-    // Basic array with 33 items
     const frame: Landmark[] = new Array(33).fill(createMockLandmark(0.5, 0.5, 0));
     
-    // Set shoulders, hips, knees
     const vis = 0.9;
-    const yPos = inFrame ? 0.5 : 1.5; // If not in frame, move them out of bounds
+    const yPos = inFrame ? 0.5 : 1.5; 
+    const hipX = 0.5;
     
-    frame[11] = createMockLandmark(0.4, yPos - 0.2, vis); // L Shoulder
-    frame[12] = createMockLandmark(0.6, yPos - 0.2, vis); // R Shoulder
-    frame[23] = createMockLandmark(0.4, yPos, vis); // L Hip
-    frame[24] = createMockLandmark(0.6, yPos, vis); // R Hip
-    frame[25] = createMockLandmark(0.4, yPos + 0.2, vis); // L Knee
-    frame[26] = createMockLandmark(0.6, yPos + 0.2, vis); // R Knee
+    frame[11] = createMockLandmark(hipX, yPos - 0.2, vis); // L Shoulder
+    frame[12] = createMockLandmark(hipX, yPos - 0.2, vis); // R Shoulder
+    frame[23] = createMockLandmark(hipX, yPos, vis); // L Hip
+    frame[24] = createMockLandmark(hipX, yPos, vis); // R Hip
+    frame[25] = createMockLandmark(hipX, yPos + 0.2, vis); // L Knee
+    frame[26] = createMockLandmark(hipX, yPos + 0.2, vis); // R Knee
     
-    // Simulate steps by moving ankles apart and together
-    // A step needs a frame with dist > 0.1, then a frame with dist < 0.05
-    // We will place 'steps' number of wide frames at the beginning
-    const isStepPhase = i < steps * 2 && i % 2 === 0;
-    const dist = isStepPhase ? 0.15 : 0.02;
+    let lAnkleX = hipX;
+    let rAnkleX = hipX;
 
-    frame[27] = createMockLandmark(0.5 - dist, yPos + 0.4, anklesVisible ? vis : 0.1); // L Ankle
-    frame[28] = createMockLandmark(0.5 + dist, yPos + 0.4, anklesVisible ? vis : 0.1); // R Ankle
+    if (hasSteps) {
+      // 2 steps per second
+      const phase = (i / fps) * Math.PI * 2;
+      lAnkleX = hipX + Math.sin(phase) * 0.15;
+      rAnkleX = hipX - Math.sin(phase) * 0.15;
+    }
+
+    frame[27] = createMockLandmark(lAnkleX, yPos + 0.4, anklesVisible ? vis : 0.1);
+    frame[28] = createMockLandmark(rAnkleX, yPos + 0.4, anklesVisible ? vis : 0.1);
 
     frames.push(frame);
   }
@@ -43,8 +47,8 @@ const generateFrames = (
 
 describe('Capture Quality Assessment', () => {
   it('passes a good capture with sufficient frames and steps', () => {
-    // 30 frames, ankles visible, in frame, 4 steps
-    const frames = generateFrames(30, true, true, 4);
+    // 60 frames (4s), ankles visible, in frame, has steps (approx 8 steps)
+    const frames = generateFrames(60, true, true, true);
     const result = assessCaptureQuality(frames);
     
     expect(result.is_good).toBe(true);
@@ -52,7 +56,7 @@ describe('Capture Quality Assessment', () => {
   });
 
   it('fails when ankles are missing (legs cut off)', () => {
-    const frames = generateFrames(30, false, true, 4);
+    const frames = generateFrames(60, false, true, true);
     const result = assessCaptureQuality(frames);
     
     expect(result.is_good).toBe(false);
@@ -61,7 +65,7 @@ describe('Capture Quality Assessment', () => {
   });
 
   it('fails when subject is out of frame', () => {
-    const frames = generateFrames(30, true, false, 4);
+    const frames = generateFrames(60, true, false, true);
     const result = assessCaptureQuality(frames);
     
     expect(result.is_good).toBe(false);
@@ -70,7 +74,7 @@ describe('Capture Quality Assessment', () => {
   });
 
   it('fails when too few steps are detected', () => {
-    const frames = generateFrames(30, true, true, 1); // Only 1 step
+    const frames = generateFrames(60, true, true, false); // No steps
     const result = assessCaptureQuality(frames);
     
     expect(result.is_good).toBe(false);
@@ -79,7 +83,7 @@ describe('Capture Quality Assessment', () => {
   });
 
   it('fails when frame count is too low', () => {
-    const frames = generateFrames(5, true, true, 0);
+    const frames = generateFrames(5, true, true, false);
     const result = assessCaptureQuality(frames);
     
     expect(result.is_good).toBe(false);
