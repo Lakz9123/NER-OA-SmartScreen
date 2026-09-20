@@ -4,11 +4,12 @@ import { captureConfig } from '../config/captureConfig';
 export interface StepResult {
   stepCount: number;
   stepTimestamps: number[];
+  cadence: number;
 }
 
 export function detectSteps(frames: Landmark[][], timestamps: number[]): StepResult {
   if (frames.length === 0 || frames.length !== timestamps.length) {
-    return { stepCount: 0, stepTimestamps: [] };
+    return { stepCount: 0, stepTimestamps: [], cadence: 0 };
   }
 
   // 1. Calculate raw relative ankle distances
@@ -31,65 +32,95 @@ export function detectSteps(frames: Landmark[][], timestamps: number[]): StepRes
     const anklesVis = leftAnkle.visibility > minVis && rightAnkle.visibility > minVis;
 
     if (hipsVis && anklesVis) {
-      const hipMidpointX = (leftHip.x + rightHip.x) / 2;
-      // Use absolute distance between ankles, or distance relative to hip?
-      // The prompt suggests "ankle x-position relative to the body's hip midpoint"
-      // But standard gait distance is just abs(leftAnkle.x - rightAnkle.x).
-      // Let's use the maximum offset of any ankle from the hip midpoint to capture 
-      // the peak of the stride when viewed from the side.
-      const leftDist = Math.abs(leftAnkle.x - hipMidpointX);
-      const rightDist = Math.abs(rightAnkle.x - hipMidpointX);
-      rawDistances.push(Math.max(leftDist, rightDist));
+      // Use signed distance between ankles
+      const d = leftAnkle.x - rightAnkle.x;
+      rawDistances.push(d);
     } else {
-      rawDistances.push(0);
+      rawDistances.push(0); // If not visible, assume 0
     }
   }
 
-  // 2. Smooth with time-based moving average
-  const windowMs = captureConfig.STEP_DETECTION.MOVING_AVERAGE_WINDOW_MS;
-  const smoothedDistances: number[] = [];
-  
+  // 2. Detrend the signal (subtract a slow moving average to remove stationary bias)
+  const detrendWindowMs = captureConfig.STEP_DETECTION.DETREND_WINDOW_MS;
+  const detrendedDistances: number[] = [];
+
   for (let i = 0; i < rawDistances.length; i++) {
     const currentTime = timestamps[i];
     let sum = 0;
     let count = 0;
     
-    // Look back in time up to windowMs
+    // Look back up to detrendWindowMs
     for (let j = i; j >= 0; j--) {
-      if (currentTime - timestamps[j] > windowMs) {
+      if (currentTime - timestamps[j] > detrendWindowMs) {
         break;
       }
       sum += rawDistances[j];
       count++;
     }
+    const baseline = sum / count;
+    detrendedDistances.push(rawDistances[i] - baseline);
+  }
+
+  // 3. Smooth the detrended signal to remove high-frequency jitter
+  const smoothWindowMs = captureConfig.STEP_DETECTION.MOVING_AVERAGE_WINDOW_MS;
+  const smoothedDistances: number[] = [];
+  
+  for (let i = 0; i < detrendedDistances.length; i++) {
+    const currentTime = timestamps[i];
+    let sum = 0;
+    let count = 0;
+    
+    // Look back up to smoothWindowMs
+    for (let j = i; j >= 0; j--) {
+      if (currentTime - timestamps[j] > smoothWindowMs) {
+        break;
+      }
+      sum += detrendedDistances[j];
+      count++;
+    }
     smoothedDistances.push(sum / count);
   }
 
-  // 3. Peak detection
+  // 4. Absolute value of the detrended & smoothed signal
+  const absSmoothed = smoothedDistances.map(Math.abs);
+
+  // 5. True Prominence Peak detection
   let stepCount = 0;
   const stepTimestamps: number[] = [];
   let lastStepTime = 0;
-  const { MIN_TIME_BETWEEN_STEPS_MS, PROMINENCE_THRESHOLD } = captureConfig.STEP_DETECTION;
+  const { MIN_TIME_BETWEEN_STEPS_MS, MIN_PEAK_PROMINENCE } = captureConfig.STEP_DETECTION;
 
-  for (let i = 1; i < smoothedDistances.length - 1; i++) {
-    const prev = smoothedDistances[i - 1];
-    const curr = smoothedDistances[i];
-    const next = smoothedDistances[i + 1];
+  let currentValley = absSmoothed[0] || 0;
+
+  for (let i = 1; i < absSmoothed.length - 1; i++) {
+    const prev = absSmoothed[i - 1];
+    const curr = absSmoothed[i];
+    const next = absSmoothed[i + 1];
     const time = timestamps[i];
+
+    // Track the lowest point seen since the last peak
+    currentValley = Math.min(currentValley, curr);
 
     // Is it a local maximum?
     if (curr > prev && curr > next) {
+      const prominence = curr - currentValley;
+      
       // Is it prominent enough?
-      if (curr >= PROMINENCE_THRESHOLD) {
+      if (prominence >= MIN_PEAK_PROMINENCE) {
         // Is it far enough from the last step?
         if (time - lastStepTime >= MIN_TIME_BETWEEN_STEPS_MS) {
           stepCount++;
           stepTimestamps.push(time);
           lastStepTime = time;
+          currentValley = curr; // Reset valley after detecting a valid peak
         }
       }
     }
   }
 
-  return { stepCount, stepTimestamps };
+  // Calculate cadence (steps per minute)
+  const durationMs = timestamps[timestamps.length - 1] - timestamps[0];
+  const cadence = durationMs > 0 ? (stepCount / (durationMs / 60000)) : 0;
+
+  return { stepCount, stepTimestamps, cadence };
 }

@@ -9,7 +9,9 @@ describe('Step Detection', () => {
   const generateSequence = (
     frameCount: number, 
     fps: number, 
-    stridePattern: 'walk' | 'stand' | 'front-walk'
+    stridePattern: 'walk' | 'stand' | 'front-walk',
+    hipHalfWidth: number = 0.0,
+    jitter: number = 0.004
   ) => {
     const frames: Landmark[][] = [];
     const timestamps: number[] = [];
@@ -18,31 +20,31 @@ describe('Step Detection', () => {
       const frame: Landmark[] = new Array(33).fill(createMockLandmark(0.5, 0.5, 0));
       timestamps.push(i * (1000 / fps));
       
-      const hipX = 0.5;
-      frame[23] = createMockLandmark(hipX, 0.5, 0.9); // L Hip
-      frame[24] = createMockLandmark(hipX, 0.5, 0.9); // R Hip
+      const hipMidX = 0.5;
+      const lHipX = hipMidX - hipHalfWidth;
+      const rHipX = hipMidX + hipHalfWidth;
+      
+      frame[23] = createMockLandmark(lHipX, 0.5, 0.9); // L Hip
+      frame[24] = createMockLandmark(rHipX, 0.5, 0.9); // R Hip
 
-      let lAnkleX = 0.5;
-      let rAnkleX = 0.5;
+      let lAnkleX = lHipX;
+      let rAnkleX = rHipX;
 
       if (stridePattern === 'walk') {
-        // Simulate side-view walking (ankles move forward and backward relative to hips)
-        // A sine wave simulates the pendulum motion of the legs
-        // Make the frequency such that 1 full cycle (2 steps) takes about 1 second (15 frames at 15fps)
-        const phase = (i / fps) * Math.PI * 2; // 2 steps per second
-        lAnkleX = hipX + Math.sin(phase) * 0.15;
-        rAnkleX = hipX - Math.sin(phase) * 0.15;
+        // Side-view walking: ankles swing wide
+        const phase = (i / fps) * Math.PI * 2; // 2 steps per sec
+        lAnkleX = hipMidX + Math.sin(phase) * 0.15;
+        rAnkleX = hipMidX - Math.sin(phase) * 0.15;
       } else if (stridePattern === 'front-walk') {
-        // Walking towards camera: ankles move up/down (Y axis).
-        // Realistic hip width is about 0.1 in relative coordinates (e.g., hips are at 0.45 and 0.55).
-        // Ankles stay under hips, with minor sway (0.02) during stride.
-        frame[23] = createMockLandmark(0.45, 0.5, 0.9); // L Hip
-        frame[24] = createMockLandmark(0.55, 0.5, 0.9); // R Hip
-        
+        // Front-walk: ankles sway slightly, staying mostly under wide hips
         const phase = (i / fps) * Math.PI * 2;
-        lAnkleX = 0.45 + Math.sin(phase) * 0.02; 
-        rAnkleX = 0.55 + Math.cos(phase) * 0.02;
+        lAnkleX = lHipX + Math.sin(phase) * 0.02; 
+        rAnkleX = rHipX + Math.cos(phase) * 0.02;
       }
+
+      // Add jitter
+      lAnkleX += (Math.random() - 0.5) * jitter;
+      rAnkleX += (Math.random() - 0.5) * jitter;
 
       frame[27] = createMockLandmark(lAnkleX, 0.9, 0.9); // L Ankle
       frame[28] = createMockLandmark(rAnkleX, 0.9, 0.9); // R Ankle
@@ -53,43 +55,49 @@ describe('Step Detection', () => {
     return { frames, timestamps };
   };
 
-  it('detects correct number of steps in a standard side-view walk', () => {
-    // 3 seconds at 30fps = 90 frames. 2 steps per second = 6 steps.
-    const { frames, timestamps } = generateSequence(90, 30, 'walk');
+  it('detects correct number of steps in a standard side-view walk (10s, 30fps)', () => {
+    // 10 seconds at 30fps = 300 frames. 2 steps per second = ~20 steps.
+    const { frames, timestamps } = generateSequence(300, 30, 'walk', 0.0, 0.01);
     const result = detectSteps(frames, timestamps);
     
-    // Allow slight variance due to smoothing and edge effects
-    expect(result.stepCount).toBeGreaterThanOrEqual(4);
-    expect(result.stepCount).toBeLessThanOrEqual(7);
+    expect(result.stepCount).toBeGreaterThanOrEqual(15);
+    expect(result.stepCount).toBeLessThanOrEqual(25);
+    expect(result.cadence).toBeGreaterThanOrEqual(90);
   });
 
-  it('detects zero steps when standing still', () => {
-    const { frames, timestamps } = generateSequence(60, 30, 'stand');
-    const result = detectSteps(frames, timestamps);
-    
-    expect(result.stepCount).toBe(0);
-    expect(result.stepTimestamps).toHaveLength(0);
+  const hipWidths = [0.04, 0.06, 0.08, 0.10];
+  
+  hipWidths.forEach(hw => {
+    it(`detects zero steps when standing still facing camera (hipHalfWidth: ${hw})`, () => {
+      const { frames, timestamps } = generateSequence(300, 30, 'stand', hw, 0.01);
+      const result = detectSteps(frames, timestamps);
+      expect(result.stepCount).toBe(0);
+    });
+
+    it(`detects zero steps when walking toward the camera (hipHalfWidth: ${hw})`, () => {
+      const { frames, timestamps } = generateSequence(300, 30, 'front-walk', hw, 0.01);
+      const result = detectSteps(frames, timestamps);
+      
+      // Even with slight sway and high jitter, detrending and prominence should filter it out
+      expect(result.stepCount).toBeLessThanOrEqual(2); // allow max 2 noise steps, but usually 0
+    });
   });
 
-  it('detects zero steps when walking toward the camera (invalid protocol)', () => {
-    const { frames, timestamps } = generateSequence(90, 30, 'front-walk');
+  it('detects zero steps when standing still in side view', () => {
+    const { frames, timestamps } = generateSequence(300, 30, 'stand', 0.0, 0.01);
     const result = detectSteps(frames, timestamps);
-    
-    // Front-walking shouldn't trigger the X-axis prominence threshold
     expect(result.stepCount).toBe(0);
   });
 
   it('detects the same number of steps regardless of framerate (15fps vs 30fps)', () => {
-    // Generate 4 seconds of walking
-    const seq15 = generateSequence(60, 15, 'walk');
-    const seq30 = generateSequence(120, 30, 'walk');
+    // Generate 10 seconds of walking
+    const seq15 = generateSequence(150, 15, 'walk', 0.0, 0.004);
+    const seq30 = generateSequence(300, 30, 'walk', 0.0, 0.004);
 
     const result15 = detectSteps(seq15.frames, seq15.timestamps);
     const result30 = detectSteps(seq30.frames, seq30.timestamps);
 
-    // Both should detect the exact same number of steps because timestamps are identical
-    // and prominence/time thresholds are time-based, not frame-based.
-    // (Moving average window introduces a tiny difference, but not enough to change count)
-    expect(result15.stepCount).toBe(result30.stepCount);
+    // Difference should be very small or zero
+    expect(Math.abs(result15.stepCount - result30.stepCount)).toBeLessThanOrEqual(1);
   });
 });

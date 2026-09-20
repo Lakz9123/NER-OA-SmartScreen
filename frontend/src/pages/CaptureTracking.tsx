@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { PoseLandmarker, FilesetResolver, DrawingUtils } from '@mediapipe/tasks-vision';
 import { X, Activity, Scan, AlertTriangle, RefreshCw, Info } from 'lucide-react';
 import { KinematicsTracker } from '../utils/kinematics';
+import { detectSteps } from '../utils/stepDetection';
 import type { Landmark } from '../utils/types';
 import { assessCaptureQuality } from '../capture/quality';
 import { captureConfig } from '../config/captureConfig';
@@ -245,10 +246,17 @@ export default function CaptureTracking() {
   // Debug Data
   let debugScore = 0;
   let debugMetrics: any = {};
+  let debugCadence = 0;
   if (isDebug && captureState === 'recording' && trackerRef.current.rawFrames.length > 0) {
     const q = assessCaptureQuality(trackerRef.current.rawFrames, trackerRef.current.timestamps);
     debugScore = q.score;
     debugMetrics = q.metrics;
+    
+    // Compute current cadence directly for debug display if possible, or extract from detectSteps if needed
+    // detectSteps is used inside assessCaptureQuality. Since metrics doesn't export cadence, let's just 
+    // re-run detectSteps for debug UI (it's cheap).
+    const { cadence } = detectSteps(trackerRef.current.rawFrames, trackerRef.current.timestamps);
+    debugCadence = cadence;
   }
 
   return (
@@ -366,6 +374,10 @@ export default function CaptureTracking() {
             <div className="flex items-center text-teal-400 font-bold mb-2 text-sm"><Info className="h-4 w-4 mr-1"/> Debug Mode</div>
             <p>Score: {debugScore}/100</p>
             <p>Steps: {debugMetrics.stepCount || 0}</p>
+            <p>Cadence: {debugCadence.toFixed(1)} SPM</p>
+            <p className={`font-bold ${debugCadence >= 30 && debugCadence <= 200 ? 'text-emerald-400' : 'text-rose-400'}`}>
+              {debugCadence === 0 ? 'WAITING' : (debugCadence >= 30 && debugCadence <= 200 ? 'VALID WALK' : 'INVALID WALK')}
+            </p>
             <p>Frames: {debugMetrics.frameCount || 0}</p>
             <p>Ankles Vis: {(debugMetrics.anklesVisible * 100 || 0).toFixed(1)}%</p>
             <p>Knees Vis: {(debugMetrics.kneesVisible * 100 || 0).toFixed(1)}%</p>
