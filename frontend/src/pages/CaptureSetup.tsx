@@ -11,7 +11,9 @@ export default function CaptureSetup() {
 
   const requestPermissions = async () => {
     try {
-      await navigator.mediaDevices.getUserMedia({ video: true });
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      // Stop the stream immediately, we just needed to trigger the permission prompt
+      stream.getTracks().forEach(track => track.stop());
       setHasPermissions(true);
     } catch {
       alert("Camera permission is required for the screening.");

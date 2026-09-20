@@ -91,6 +91,7 @@ export default function Registration() {
                     className="block w-full rounded-2xl border-0 bg-slate-50 py-4 px-4 text-slate-900 ring-1 ring-inset ring-slate-200 focus:ring-2 focus:ring-inset focus:ring-teal-600 transition-all font-medium appearance-none"
                     value={formData.age_band} onChange={handleChange}
                   >
+                    <option value="30-39">30 - 39 years</option>
                     <option value="40-49">40 - 49 years</option>
                     <option value="50-59">50 - 59 years</option>
                     <option value="60-69">60 - 69 years</option>

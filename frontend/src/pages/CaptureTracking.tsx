@@ -29,9 +29,17 @@ export default function CaptureTracking() {
 
     const initializeAI = async () => {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ 
-          video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } } 
-        });
+        let stream: MediaStream;
+        try {
+          // Try to get environment camera first (rear camera)
+          stream = await navigator.mediaDevices.getUserMedia({ 
+            video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } } 
+          });
+        } catch (camErr) {
+          console.warn("Could not get environment camera, falling back to default:", camErr);
+          // Fallback to any available camera
+          stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        }
         streamRef.current = stream;
         
         if (videoRef.current) {
