@@ -1,3 +1,5 @@
+import logging
+import dateutil.parser
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
@@ -45,7 +47,8 @@ def sync_batch(
                 village_code=p_in.village_code,
                 occupation_type=p_in.occupation_type,
                 consent_flag=p_in.consent_flag,
-                registered_by_id=current_user.id
+                registered_by_id=current_user.id,
+                created_at=dateutil.parser.isoparse(p_in.created_at)
             )
             db.add(new_patient)
             db.commit() # Commit per record so one failure doesn't rollback others
@@ -53,7 +56,8 @@ def sync_batch(
             results.append(SyncRecordResult(id=p_in.id, type='patient', status='created'))
         except Exception as e:
             db.rollback()
-            results.append(SyncRecordResult(id=p_in.id, type='patient', status='failed', reason=str(e)))
+            logging.exception(f"Error syncing patient {p_in.id}")
+            results.append(SyncRecordResult(id=p_in.id, type='patient', status='failed', reason="An unexpected error occurred."))
 
     # Process screenings
     for s_in in batch.screenings:
@@ -106,7 +110,8 @@ def sync_batch(
                 risk_level=ml_result['risk_level'],
                 risk_score=ml_result['risk_score'],
                 model_version=ml_result['model_version'],
-                explainability_data=ml_result['explainability_data']
+                explainability_data=ml_result['explainability_data'],
+                created_at=dateutil.parser.isoparse(s_in.created_at)
             )
             db.add(new_screening)
             db.commit()
@@ -122,7 +127,8 @@ def sync_batch(
             ))
         except Exception as e:
             db.rollback()
-            results.append(SyncRecordResult(id=s_in.id, type='screening', status='failed', reason=str(e)))
+            logging.exception(f"Error syncing screening {s_in.id}")
+            results.append(SyncRecordResult(id=s_in.id, type='screening', status='failed', reason="An unexpected error occurred."))
 
     return SyncBatchResponse(
         synced_patients=synced_patients,

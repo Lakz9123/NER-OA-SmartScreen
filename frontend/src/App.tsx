@@ -10,6 +10,7 @@ import QuestionnairePart3 from './pages/QuestionnairePart3';
 import CaptureSetup from './pages/CaptureSetup';
 import CaptureTracking from './pages/CaptureTracking';
 import CaptureReview from './pages/CaptureReview';
+import CaptureRecapture from './pages/CaptureRecapture';
 import RiskAnalysis from './pages/RiskAnalysis';
 import PatientReport from './pages/PatientReport';
 import PatientList from './pages/PatientList';
@@ -26,13 +27,13 @@ function App() {
     // Attempt automatic background sync every 30 seconds
     const interval = setInterval(() => {
       if (navigator.onLine) {
-        syncOutbox().catch(console.error);
+        syncOutbox(true).catch(console.error);
       }
     }, 30000);
     
     // Also try immediately when coming online
     const handleOnline = () => {
-      syncOutbox().catch(console.error);
+      syncOutbox(true).catch(console.error);
     };
     window.addEventListener('online', handleOnline);
     
@@ -68,6 +69,7 @@ function App() {
             {/* 8, 9, 10. Gait Capture Screens */}
             <Route path="/capture/setup" element={<CaptureSetup />} />
             <Route path="/capture/tracking" element={<CaptureTracking />} />
+            <Route path="/capture/recapture" element={<CaptureRecapture />} />
             <Route path="/capture/review" element={<CaptureReview />} />
             
             {/* 11, 12. Analysis & Report Screens */}

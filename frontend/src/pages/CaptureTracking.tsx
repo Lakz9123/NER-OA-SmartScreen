@@ -4,6 +4,7 @@ import { PoseLandmarker, FilesetResolver, DrawingUtils } from '@mediapipe/tasks-
 import { X, Activity, Scan, AlertTriangle, RefreshCw } from 'lucide-react';
 import { KinematicsTracker } from '../utils/kinematics';
 import type { Landmark } from '../utils/kinematics';
+import { assessCaptureQuality } from '../capture/quality';
 
 export default function CaptureTracking() {
   const navigate = useNavigate();
@@ -153,11 +154,17 @@ export default function CaptureTracking() {
       if (currentProgress >= 100) {
         clearInterval(interval);
         isRecordingRef.current = false;
-        setTimeout(() => {
-          // Send real telemetry data to next screen
-          const telemetryData = trackerRef.current.getMetrics();
+
+        // Evaluate quality before proceeding
+        const quality = assessCaptureQuality(trackerRef.current.rawFrames);
+        
+        if (!quality.is_good) {
+          navigate('/capture/recapture', { state: { patientId, answers, reason: quality.reason } });
+        } else {
+          // Send real telemetry data and quality score to next screen
+          const telemetryData = { ...trackerRef.current.getMetrics(), quality_score: quality.score };
           navigate('/capture/review', { state: { patientId, answers, telemetryData } });
-        }, 500);
+        }
       }
     }, 250);
   };

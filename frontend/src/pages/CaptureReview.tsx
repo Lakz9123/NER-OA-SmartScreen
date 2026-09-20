@@ -143,6 +143,16 @@ export default function CaptureReview() {
               </div>
             </div>
 
+            <div className="flex items-center justify-between p-4 bg-slate-950 rounded-2xl border border-slate-800">
+              <span className="text-slate-400 text-sm">Capture Quality</span>
+              <div className="flex items-center">
+                <span className={`text-xl font-bold ${telemetryData.quality_score >= 80 ? 'text-teal-400' : telemetryData.quality_score >= 50 ? 'text-amber-400' : 'text-rose-400'}`}>
+                  {telemetryData.quality_score || 100}
+                </span>
+                <span className="text-slate-500 text-xs ml-2">/ 100</span>
+              </div>
+            </div>
+
           </div>
         </div>
 

@@ -24,9 +24,13 @@ export class KinematicsTracker {
   stepCount = 0;
   isStepActive = false;
   stepTimestamps: number[] = [];
+  
+  rawFrames: Landmark[][] = [];
 
   addFrame(landmarks: Landmark[], timestampMs: number) {
     if (!landmarks || landmarks.length < 33) return;
+
+    this.rawFrames.push(landmarks);
 
     const leftHip = landmarks[23];
     const leftKnee = landmarks[25];

@@ -97,3 +97,58 @@ def test_sync_status(client, normal_user_token):
     data = response.json()
     assert "total_patients" in data
     assert "total_screenings" in data
+
+def test_sync_created_at_and_risk_override(client, normal_user_token, db_session):
+    from app.models.patient import Patient
+    from app.models.screening import Screening
+    import datetime
+
+    headers = {"Authorization": f"Bearer {normal_user_token}"}
+    payload = {
+        "patients": [
+            {
+                "id": "pat-override",
+                "age_band": "50-59",
+                "sex": "female",
+                "village_code": "V01",
+                "consent_flag": True,
+                "created_at": "2023-10-01T10:00:00Z"
+            }
+        ],
+        "screenings": [
+            {
+                "id": "scr-override",
+                "patient_id": "pat-override",
+                "pain_score": 10, # Very high pain
+                "stiffness_score": 2, # High stiffness
+                "function_score": 10, # High difficulty
+                "knee_angle_left": 15.0,
+                "knee_angle_right": 15.0,
+                "knee_rom_left": 90.0,
+                "knee_rom_right": 90.0,
+                "symmetry_index": 0.8,
+                "cadence": 80.0,
+                "step_time": 0.8,
+                "risk_level": "Low", # Intentionally wrong to test override
+                "risk_score": 0.1,   # Intentionally wrong
+                "model_version": "v1.0-client",
+                "created_at": "2023-10-01T10:05:00Z"
+            }
+        ]
+    }
+    
+    response = client.post("/sync/batch", json=payload, headers=headers)
+    assert response.status_code == 200
+    
+    # Check DB for created_at parsing
+    pat = db_session.query(Patient).filter(Patient.id == "pat-override").first()
+    assert pat.created_at.year == 2023
+    assert pat.created_at.month == 10
+    
+    scr = db_session.query(Screening).filter(Screening.id == "scr-override").first()
+    assert scr.created_at.year == 2023
+    assert scr.created_at.minute == 5
+    
+    # Check that server risk level overrides the client's "Low"
+    assert scr.risk_level != "Low"
+    assert scr.risk_score != 0.1

@@ -9,13 +9,15 @@ export const resetSyncingItems = async () => {
   }
 };
 
-export const syncOutbox = async () => {
+export const syncOutbox = async (isBackground: boolean = false) => {
   // Reset any stuck items just in case (though typically called on startup)
   
-  const pendingItems = await db.outbox
-    .where('status')
-    .anyOf('pending', 'failed') // We can retry failed items too when sync is triggered
-    .toArray();
+  let pendingItems = [];
+  if (isBackground) {
+    pendingItems = await db.outbox.where('status').equals('pending').toArray();
+  } else {
+    pendingItems = await db.outbox.where('status').anyOf('pending', 'failed').toArray();
+  }
     
   if (pendingItems.length === 0) {
     return { success: true, message: 'Nothing to sync' };
@@ -62,10 +64,9 @@ export const syncOutbox = async () => {
   }
 
   if (fetchError) {
-    // Network error after retries
+    // Network error after retries: Leave them as pending for background retry
     for (const item of pendingItems) {
-      // Restore previous status or mark failed
-      await db.outbox.update(item.id, { status: 'failed', reason: fetchError.message || 'Network error' });
+      await db.outbox.update(item.id, { status: 'pending' });
     }
     return { success: false, message: 'Network error during sync.' };
   }
@@ -82,8 +83,9 @@ export const syncOutbox = async () => {
   }
 
   if (!response.ok) {
+    // 5xx errors or unexpected 4xx (except 401). Leave as pending so background sync retries.
     for (const item of pendingItems) {
-      await db.outbox.update(item.id, { status: 'failed', reason: `Server error: ${response.status}` });
+      await db.outbox.update(item.id, { status: 'pending' });
     }
     return { success: false, message: `Sync failed with status: ${response.status}` };
   }
@@ -107,6 +109,8 @@ export const syncOutbox = async () => {
         const updateData: any = { sync_status: 'synced' };
         if (result.server_risk_level) updateData.risk_level = result.server_risk_level;
         if (result.server_risk_score !== undefined) updateData.risk_score = result.server_risk_score;
+        if (result.server_model_version) updateData.model_version = result.server_model_version;
+        if (result.server_explainability_data) updateData.explainability_data = result.server_explainability_data;
         await db.screenings.update(item.payload.id, updateData);
       }
     } else {

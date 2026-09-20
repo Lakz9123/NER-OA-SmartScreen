@@ -125,7 +125,7 @@ describe('syncService', () => {
     expect(result.success).toBe(false);
     expect(global.fetch).toHaveBeenCalledTimes(3);
     
-    // Should be marked as failed in outbox
-    expect(db.outbox.update).toHaveBeenCalledWith('1', { status: 'failed', reason: 'Network disconnected' });
+    // Network errors leave items as 'pending' so background sync auto-retries them
+    expect(db.outbox.update).toHaveBeenCalledWith('1', { status: 'pending' });
   });
 });
