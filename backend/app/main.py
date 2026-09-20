@@ -3,10 +3,38 @@ from fastapi.middleware.cors import CORSMiddleware
 from .core.config import settings
 from .routers import auth, patients, screenings, sync, admin
 from .models.base import Base
-from .core.database import engine
+from .models.user import User
+from .core.database import engine, SessionLocal
+from .core.security import get_password_hash
 
-# Create all tables (in a real app, use Alembic)
+# Create all tables
 Base.metadata.create_all(bind=engine)
+
+# Auto-seed default users if DB is empty
+def seed_default_users():
+    db = SessionLocal()
+    try:
+        if not db.query(User).filter(User.username == "admin").first():
+            db.add(User(
+                username="admin",
+                email="admin@ner-oa.in",
+                full_name="System Admin",
+                role="admin",
+                hashed_password=get_password_hash("admin123")
+            ))
+        if not db.query(User).filter(User.username == "hw_asha").first():
+            db.add(User(
+                username="hw_asha",
+                email="asha@ner-oa.in",
+                full_name="Asha (Health Worker)",
+                role="health_worker",
+                hashed_password=get_password_hash("password123")
+            ))
+        db.commit()
+    finally:
+        db.close()
+
+seed_default_users()
 
 app = FastAPI(title=settings.PROJECT_NAME)
 
