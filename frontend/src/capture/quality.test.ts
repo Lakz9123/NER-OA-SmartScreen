@@ -4,11 +4,13 @@ import type { Landmark } from '../utils/types';
 
 const createMockLandmark = (x: number, y: number, visibility: number = 0.9): Landmark => ({ x, y, z: 0, visibility });
 
+type MotionType = 'side-walk' | 'stand-still' | 'front-walk';
+
 const generateFrames = (
   count: number,
   anklesVisible: boolean,
   inFrame: boolean,
-  hasSteps: boolean
+  motionType: MotionType = 'side-walk'
 ): Landmark[][] => {
   const frames: Landmark[][] = [];
   const fps = 15;
@@ -30,11 +32,20 @@ const generateFrames = (
     let lAnkleX = hipX;
     let rAnkleX = hipX;
 
-    if (hasSteps) {
+    if (motionType === 'side-walk') {
       // 2 steps per second
       const phase = (i / fps) * Math.PI * 2;
       lAnkleX = hipX + Math.sin(phase) * 0.15;
       rAnkleX = hipX - Math.sin(phase) * 0.15;
+    } else if (motionType === 'front-walk') {
+      // Constant wide stance, perhaps growing slightly to simulate approaching
+      const scale = 1.0 + (i / count) * 0.5;
+      lAnkleX = hipX + 0.08 * scale;
+      rAnkleX = hipX - 0.08 * scale;
+    } else if (motionType === 'stand-still') {
+      // Constant narrow stance
+      lAnkleX = hipX + 0.04;
+      rAnkleX = hipX - 0.04;
     }
 
     frame[27] = createMockLandmark(lAnkleX, yPos + 0.4, anklesVisible ? vis : 0.1);
@@ -48,7 +59,7 @@ const generateFrames = (
 describe('Capture Quality Assessment', () => {
   it('passes a good capture with sufficient frames and steps', () => {
     // 60 frames (4s), ankles visible, in frame, has steps (approx 8 steps)
-    const frames = generateFrames(60, true, true, true);
+    const frames = generateFrames(60, true, true, 'side-walk');
     const timestamps = frames.map((_, i) => i * (1000 / 15));
     const result = assessCaptureQuality(frames, timestamps);
     
@@ -57,7 +68,7 @@ describe('Capture Quality Assessment', () => {
   });
 
   it('fails when ankles are missing (legs cut off)', () => {
-    const frames = generateFrames(60, false, true, true);
+    const frames = generateFrames(60, false, true, 'side-walk');
     const timestamps = frames.map((_, i) => i * (1000 / 15));
     const result = assessCaptureQuality(frames, timestamps);
     
@@ -67,7 +78,7 @@ describe('Capture Quality Assessment', () => {
   });
 
   it('fails when subject is out of frame', () => {
-    const frames = generateFrames(60, true, false, true);
+    const frames = generateFrames(60, true, false, 'side-walk');
     const timestamps = frames.map((_, i) => i * (1000 / 15));
     const result = assessCaptureQuality(frames, timestamps);
     
@@ -76,18 +87,28 @@ describe('Capture Quality Assessment', () => {
     expect(result.score).toBeLessThanOrEqual(40);
   });
 
-  it('fails when too few steps are detected', () => {
-    const frames = generateFrames(60, true, true, false); // No steps
+  it('fails when standing still', () => {
+    const frames = generateFrames(60, true, true, 'stand-still');
     const timestamps = frames.map((_, i) => i * (1000 / 15));
     const result = assessCaptureQuality(frames, timestamps);
     
     expect(result.is_good).toBe(false);
-    expect(result.reason).toContain('Too few steps');
+    expect(result.reason).toContain('Walking not detected');
+    expect(result.score).toBeLessThanOrEqual(50);
+  });
+
+  it('fails when walking toward the camera', () => {
+    const frames = generateFrames(60, true, true, 'front-walk');
+    const timestamps = frames.map((_, i) => i * (1000 / 15));
+    const result = assessCaptureQuality(frames, timestamps);
+    
+    expect(result.is_good).toBe(false);
+    expect(result.reason).toContain('Walking not detected');
     expect(result.score).toBeLessThanOrEqual(50);
   });
 
   it('fails when frame count is too low', () => {
-    const frames = generateFrames(5, true, true, false);
+    const frames = generateFrames(5, true, true, 'side-walk');
     const timestamps = frames.map((_, i) => i * (1000 / 15));
     const result = assessCaptureQuality(frames, timestamps);
     

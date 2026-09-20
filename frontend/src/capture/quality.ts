@@ -87,21 +87,9 @@ export function assessCaptureQuality(frames: Landmark[][], timestamps: number[])
     is_good = false;
     reason = "Subject moved out of frame too frequently.";
     score = Math.min(score, 40);
-  } else if (cadence < captureConfig.STEP_DETECTION.MIN_CADENCE_SPM || cadence > captureConfig.STEP_DETECTION.MAX_CADENCE_SPM) {
+  } else if (cadence < captureConfig.STEP_DETECTION.MIN_CADENCE_SPM || cadence > captureConfig.STEP_DETECTION.MAX_CADENCE_SPM || stepCount < captureConfig.MIN_STEPS_REQUIRED) {
     is_good = false;
     reason = "Walking not detected. Please walk side to side across the screen.";
-    score = Math.min(score, 50);
-  } else if (anklesVisiblePct < captureConfig.MIN_LEGS_VISIBLE_PCT || kneesVisiblePct < captureConfig.MIN_LEGS_VISIBLE_PCT) {
-    is_good = false;
-    reason = "Legs were cut off or not clearly visible in the frame.";
-    score = Math.min(score, 30);
-  } else if (outOfBoundsPct > captureConfig.MAX_OUT_OF_BOUNDS_PCT) {
-    is_good = false;
-    reason = "Subject moved out of frame too frequently.";
-    score = Math.min(score, 40);
-  } else if (stepCount < captureConfig.MIN_STEPS_REQUIRED) {
-    is_good = false;
-    reason = "Too few steps detected. Please walk continuously.";
     score = Math.min(score, 50);
   }
 

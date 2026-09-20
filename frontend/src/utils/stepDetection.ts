@@ -12,8 +12,9 @@ export function detectSteps(frames: Landmark[][], timestamps: number[]): StepRes
     return { stepCount: 0, stepTimestamps: [], cadence: 0 };
   }
 
-  // 1. Calculate raw relative ankle distances
+  // 1. Calculate raw relative ankle distances and leg lengths
   const rawDistances: number[] = [];
+  const legLengths: number[] = [];
   const minVis = captureConfig.MIN_LANDMARK_VISIBILITY;
 
   for (let i = 0; i < frames.length; i++) {
@@ -35,9 +36,21 @@ export function detectSteps(frames: Landmark[][], timestamps: number[]): StepRes
       // Use signed distance between ankles
       const d = leftAnkle.x - rightAnkle.x;
       rawDistances.push(d);
+
+      // Calculate vertical leg length for dynamic scaling
+      const hipMidY = (leftHip.y + rightHip.y) / 2;
+      const ankleMidY = (leftAnkle.y + rightAnkle.y) / 2;
+      legLengths.push(Math.abs(ankleMidY - hipMidY));
     } else {
       rawDistances.push(0); // If not visible, assume 0
     }
+  }
+
+  // Calculate median leg length
+  let medianLegLength = 0;
+  if (legLengths.length > 0) {
+    const sorted = [...legLengths].sort((a, b) => a - b);
+    medianLegLength = sorted[Math.floor(sorted.length / 2)];
   }
 
   // 2. Detrend the signal (subtract a slow moving average to remove stationary bias)
@@ -88,7 +101,11 @@ export function detectSteps(frames: Landmark[][], timestamps: number[]): StepRes
   let stepCount = 0;
   const stepTimestamps: number[] = [];
   let lastStepTime = 0;
-  const { MIN_TIME_BETWEEN_STEPS_MS, MIN_PEAK_PROMINENCE } = captureConfig.STEP_DETECTION;
+  const { MIN_TIME_BETWEEN_STEPS_MS, MIN_PEAK_PROMINENCE_FRACTION, MIN_PEAK_PROMINENCE_FALLBACK } = captureConfig.STEP_DETECTION;
+
+  const dynamicProminenceThreshold = medianLegLength > 0 
+    ? medianLegLength * MIN_PEAK_PROMINENCE_FRACTION 
+    : MIN_PEAK_PROMINENCE_FALLBACK;
 
   let currentValley = absSmoothed[0] || 0;
 
@@ -106,7 +123,7 @@ export function detectSteps(frames: Landmark[][], timestamps: number[]): StepRes
       const prominence = curr - currentValley;
       
       // Is it prominent enough?
-      if (prominence >= MIN_PEAK_PROMINENCE) {
+      if (prominence >= dynamicProminenceThreshold) {
         // Is it far enough from the last step?
         if (time - lastStepTime >= MIN_TIME_BETWEEN_STEPS_MS) {
           stepCount++;

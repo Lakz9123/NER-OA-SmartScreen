@@ -18,7 +18,8 @@ export const captureConfig = {
     DETREND_WINDOW_MS: 2000,      // Window for removing slow moving baseline (standing/walking toward camera)
     MOVING_AVERAGE_WINDOW_MS: 200, // Milliseconds to smooth over to remove jitter
     MIN_TIME_BETWEEN_STEPS_MS: 300, // Minimum time (ms) to wait before detecting another step
-    MIN_PEAK_PROMINENCE: 0.08,    // The minimum relative X-distance peak height above valleys
+    MIN_PEAK_PROMINENCE_FRACTION: 0.20, // Prominence must be >= this fraction of leg length
+    MIN_PEAK_PROMINENCE_FALLBACK: 0.08, // Fallback absolute prominence if leg length unknown
     MIN_CADENCE_SPM: 30,          // Minimum steps per minute to be considered valid walking
     MAX_CADENCE_SPM: 200,         // Maximum steps per minute
   }

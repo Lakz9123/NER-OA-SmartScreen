@@ -11,7 +11,10 @@ describe('Step Detection', () => {
     fps: number, 
     stridePattern: 'walk' | 'stand' | 'front-walk',
     hipHalfWidth: number = 0.0,
-    jitter: number = 0.004
+    jitter: number = 0.004,
+    amplitude: number = 0.15,
+    scale: number = 1.0,
+    stepFreqHz: number = 2.0 // 2 steps/sec = 120 SPM
   ) => {
     const frames: Landmark[][] = [];
     const timestamps: number[] = [];
@@ -21,33 +24,36 @@ describe('Step Detection', () => {
       timestamps.push(i * (1000 / fps));
       
       const hipMidX = 0.5;
-      const lHipX = hipMidX - hipHalfWidth;
-      const rHipX = hipMidX + hipHalfWidth;
+      const hipMidY = 0.5;
+      const ankleMidY = 0.5 + 0.4 * scale;
+
+      const lHipX = hipMidX - (hipHalfWidth * scale);
+      const rHipX = hipMidX + (hipHalfWidth * scale);
       
-      frame[23] = createMockLandmark(lHipX, 0.5, 0.9); // L Hip
-      frame[24] = createMockLandmark(rHipX, 0.5, 0.9); // R Hip
+      frame[23] = createMockLandmark(lHipX, hipMidY, 0.9); // L Hip
+      frame[24] = createMockLandmark(rHipX, hipMidY, 0.9); // R Hip
 
       let lAnkleX = lHipX;
       let rAnkleX = rHipX;
 
       if (stridePattern === 'walk') {
         // Side-view walking: ankles swing wide
-        const phase = (i / fps) * Math.PI * 2; // 2 steps per sec
-        lAnkleX = hipMidX + Math.sin(phase) * 0.15;
-        rAnkleX = hipMidX - Math.sin(phase) * 0.15;
+        const phase = (i / fps) * Math.PI * stepFreqHz;
+        lAnkleX = hipMidX + Math.sin(phase) * (amplitude * scale);
+        rAnkleX = hipMidX - Math.sin(phase) * (amplitude * scale);
       } else if (stridePattern === 'front-walk') {
         // Front-walk: ankles sway slightly, staying mostly under wide hips
-        const phase = (i / fps) * Math.PI * 2;
-        lAnkleX = lHipX + Math.sin(phase) * 0.02; 
-        rAnkleX = rHipX + Math.cos(phase) * 0.02;
+        const phase = (i / fps) * Math.PI * stepFreqHz;
+        lAnkleX = lHipX + Math.sin(phase) * (0.02 * scale); 
+        rAnkleX = rHipX + Math.cos(phase) * (0.02 * scale);
       }
 
       // Add jitter
       lAnkleX += (Math.random() - 0.5) * jitter;
       rAnkleX += (Math.random() - 0.5) * jitter;
 
-      frame[27] = createMockLandmark(lAnkleX, 0.9, 0.9); // L Ankle
-      frame[28] = createMockLandmark(rAnkleX, 0.9, 0.9); // R Ankle
+      frame[27] = createMockLandmark(lAnkleX, ankleMidY, 0.9); // L Ankle
+      frame[28] = createMockLandmark(rAnkleX, ankleMidY, 0.9); // R Ankle
       
       frames.push(frame);
     }
@@ -57,12 +63,42 @@ describe('Step Detection', () => {
 
   it('detects correct number of steps in a standard side-view walk (10s, 30fps)', () => {
     // 10 seconds at 30fps = 300 frames. 2 steps per second = ~20 steps.
-    const { frames, timestamps } = generateSequence(300, 30, 'walk', 0.0, 0.01);
+    const { frames, timestamps } = generateSequence(300, 30, 'walk', 0.0, 0.01, 0.15);
     const result = detectSteps(frames, timestamps);
     
     expect(result.stepCount).toBeGreaterThanOrEqual(15);
     expect(result.stepCount).toBeLessThanOrEqual(25);
     expect(result.cadence).toBeGreaterThanOrEqual(90);
+  });
+
+  it('counts short-stride side walks as walking (amplitude 0.05)', () => {
+    const { frames, timestamps } = generateSequence(300, 30, 'walk', 0.0, 0.01, 0.05);
+    const result = detectSteps(frames, timestamps);
+    expect(result.stepCount).toBeGreaterThanOrEqual(15);
+  });
+
+  it('counts short-stride side walks as walking (amplitude 0.07)', () => {
+    const { frames, timestamps } = generateSequence(300, 30, 'walk', 0.0, 0.01, 0.07);
+    const result = detectSteps(frames, timestamps);
+    expect(result.stepCount).toBeGreaterThanOrEqual(15);
+  });
+
+  it('counts walking far from the camera (half scale) as walking', () => {
+    // scale = 0.5, meaning hip-to-ankle is 0.2 instead of 0.4. Amplitude is scaled down too.
+    const { frames, timestamps } = generateSequence(300, 30, 'walk', 0.0, 0.01, 0.15, 0.5);
+    const result = detectSteps(frames, timestamps);
+    expect(result.stepCount).toBeGreaterThanOrEqual(15);
+  });
+
+  it('counts a slow side walk (66 steps/min) as walking', () => {
+    // 66 SPM = 1.1 Hz
+    const { frames, timestamps } = generateSequence(300, 30, 'walk', 0.0, 0.01, 0.15, 1.0, 1.1);
+    const result = detectSteps(frames, timestamps);
+    
+    expect(result.stepCount).toBeGreaterThanOrEqual(8);
+    expect(result.stepCount).toBeLessThanOrEqual(14);
+    expect(result.cadence).toBeGreaterThanOrEqual(60);
+    expect(result.cadence).toBeLessThanOrEqual(80);
   });
 
   const hipWidths = [0.04, 0.06, 0.08, 0.10];

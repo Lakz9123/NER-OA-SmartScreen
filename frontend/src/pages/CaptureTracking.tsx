@@ -247,10 +247,14 @@ export default function CaptureTracking() {
   let debugScore = 0;
   let debugMetrics: any = {};
   let debugCadence = 0;
+  let debugReason = "Good capture quality.";
+  let debugIsGood = true;
   if (isDebug && captureState === 'recording' && trackerRef.current.rawFrames.length > 0) {
     const q = assessCaptureQuality(trackerRef.current.rawFrames, trackerRef.current.timestamps);
     debugScore = q.score;
     debugMetrics = q.metrics;
+    debugReason = q.reason;
+    debugIsGood = q.is_good;
     
     // Compute current cadence directly for debug display if possible, or extract from detectSteps if needed
     // detectSteps is used inside assessCaptureQuality. Since metrics doesn't export cadence, let's just 
@@ -382,6 +386,12 @@ export default function CaptureTracking() {
             <p>Ankles Vis: {(debugMetrics.anklesVisible * 100 || 0).toFixed(1)}%</p>
             <p>Knees Vis: {(debugMetrics.kneesVisible * 100 || 0).toFixed(1)}%</p>
             <p>In Frame: {debugMetrics.wholeBodyInFrame ? 'YES' : 'NO'}</p>
+            <div className="mt-2 pt-2 border-t border-teal-500/30">
+              <p className={`font-bold ${debugIsGood ? 'text-emerald-400' : 'text-rose-400'}`}>
+                {debugIsGood ? 'PASS' : 'FAIL'}
+              </p>
+              {!debugIsGood && <p className="text-rose-400 text-[10px] leading-tight break-words">{debugReason}</p>}
+            </div>
           </div>
         )}
 
