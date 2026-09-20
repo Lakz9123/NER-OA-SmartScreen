@@ -1,11 +1,51 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ChevronLeft, Printer, Download, Stethoscope, AlertTriangle, Activity, User, Calendar, MapPin, Phone, Globe } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { useState } from 'react';
+import { db } from '../db/db';
 export default function PatientReport() {
   const navigate = useNavigate();
   const location = useLocation();
   const { result } = location.state || { result: null };
   const { t, i18n } = useTranslation();
+
+  const [followupStatus, setFollowupStatus] = useState(result?.followup_status || 'pending');
+  const [followupNote, setFollowupNote] = useState(result?.followup_note || '');
+  const [saveStatus, setSaveStatus] = useState('');
+
+  const saveFollowup = async () => {
+    try {
+      setSaveStatus('Saving...');
+      
+      // Update local db
+      await db.screenings.update(result.id, {
+        followup_status: followupStatus,
+        followup_note: followupNote,
+        sync_status: 'pending' // trigger sync
+      });
+      
+      // Queue in outbox
+      await db.outbox.add({
+        id: crypto.randomUUID(),
+        type: 'ScreeningSync',
+        payload: { ...result, followup_status: followupStatus, followup_note: followupNote },
+        status: 'pending',
+        created_at: new Date().toISOString()
+      });
+      
+      setSaveStatus('Saved locally. Will sync when online.');
+      
+      // Try to sync if online
+      if (navigator.onLine) {
+        const { syncOutbox } = await import('../services/syncService');
+        await syncOutbox();
+        setSaveStatus('Saved and synced!');
+      }
+    } catch (err) {
+      console.error(err);
+      setSaveStatus('Failed to save.');
+    }
+  };
 
   if (!result) {
     return (
@@ -104,6 +144,41 @@ export default function PatientReport() {
               </h2>
               <p className="font-medium text-sm leading-relaxed">{isHighRisk ? t('clinical_evaluation') : ''}</p>
             </div>
+          </div>
+
+          {/* Follow-up Section */}
+          <div className="bg-white rounded-2xl p-6 border-2 border-slate-100 mb-10 print:hidden">
+            <h3 className="text-lg font-black text-slate-900 mb-4 border-b border-slate-100 pb-2">Follow-up Management</h3>
+            <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 mb-4">
+              <div className="flex-1">
+                <label className="block text-sm font-bold text-slate-500 mb-1">Status</label>
+                <select 
+                  value={followupStatus}
+                  onChange={(e) => setFollowupStatus(e.target.value)}
+                  className="w-full rounded-xl border-slate-200 focus:ring-teal-500 focus:border-teal-500"
+                >
+                  <option value="pending">Pending</option>
+                  <option value="referred">Referred</option>
+                  <option value="completed">Completed</option>
+                </select>
+              </div>
+              <div className="flex-[2]">
+                <label className="block text-sm font-bold text-slate-500 mb-1">Note</label>
+                <input 
+                  type="text" 
+                  value={followupNote}
+                  onChange={(e) => setFollowupNote(e.target.value)}
+                  placeholder="E.g., Referred to district hospital"
+                  className="w-full rounded-xl border-slate-200 focus:ring-teal-500 focus:border-teal-500"
+                />
+              </div>
+              <div className="flex items-end">
+                <button onClick={saveFollowup} className="h-10 px-6 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl shadow-sm transition-colors">
+                  Save
+                </button>
+              </div>
+            </div>
+            {saveStatus && <p className="text-sm text-teal-600 font-medium">{saveStatus}</p>}
           </div>
 
           <div className="grid sm:grid-cols-2 gap-10">

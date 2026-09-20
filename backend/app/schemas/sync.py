@@ -30,6 +30,8 @@ class ScreeningSyncItem(BaseModel):
     model_version: str
     explainability_data: Optional[dict] = None
     created_at: str
+    followup_status: Optional[str] = None
+    followup_note: Optional[str] = None
 
 class SyncBatchRequest(BaseModel):
     patients: List[PatientSyncItem] = []

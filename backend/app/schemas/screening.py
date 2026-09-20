@@ -1,5 +1,12 @@
 from pydantic import BaseModel
-from typing import Optional, Any
+from typing import Optional, Dict, Any
+from enum import Enum
+
+class FollowupStatus(str, Enum):
+    pending = "pending"
+    referred = "referred"
+    completed = "completed"
+
 from datetime import datetime
 
 class ScreeningBase(BaseModel):
@@ -25,7 +32,7 @@ class ScreeningUpdate(BaseModel):
     explainability_data: Optional[Any] = None
 
 class ScreeningFollowupUpdate(BaseModel):
-    followup_status: str
+    followup_status: FollowupStatus
     followup_note: Optional[str] = None
 
 class Screening(ScreeningBase):

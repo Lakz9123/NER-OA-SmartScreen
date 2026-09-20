@@ -25,8 +25,9 @@ def get_analytics_summary(
     risk_counts = db.query(Screening.risk_level, func.count(Screening.id)).group_by(Screening.risk_level).all()
     screenings_by_risk = {level: count for level, count in risk_counts if level}
     
-    # Referrals
+    # Total referrals and pending
     referrals = db.query(Screening).filter(Screening.followup_status == "referred").count()
+    pending_followups = db.query(Screening).filter(Screening.followup_status == "pending").count()
     
     # Screenings per day (last 30 days)
     thirty_days_ago = datetime.utcnow() - timedelta(days=30)
@@ -51,6 +52,7 @@ def get_analytics_summary(
         total_screenings=total_screenings,
         screenings_by_risk=screenings_by_risk,
         referrals=referrals,
+        pending_followups=pending_followups,
         screenings_per_day=screenings_per_day,
         screenings_by_village=screenings_by_village
     )
@@ -130,10 +132,14 @@ def update_user(
         raise HTTPException(status_code=404, detail="User not found")
         
     if user_in.role is not None:
+        if user_id == current_admin.id and user_in.role != "admin":
+            raise HTTPException(status_code=400, detail="Cannot remove own admin role")
         user.role = user_in.role
     if user_in.facility is not None:
         user.facility = user_in.facility
     if user_in.is_active is not None:
+        if user_id == current_admin.id and not user_in.is_active:
+            raise HTTPException(status_code=400, detail="Cannot disable own account")
         user.is_active = user_in.is_active
     if user_in.password is not None:
         user.hashed_password = security.get_password_hash(user_in.password)

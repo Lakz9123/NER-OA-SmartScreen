@@ -7,6 +7,7 @@ interface AnalyticsSummary {
   total_screenings: number;
   screenings_by_risk: Record<string, number>;
   referrals: number;
+  pending_followups: number;
   screenings_per_day: Record<string, number>;
   screenings_by_village: Record<string, number>;
 }
@@ -20,30 +21,44 @@ const COLORS = {
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const [data, setData] = useState<AnalyticsSummary | null>(null);
+  const [recentActivity, setRecentActivity] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    const fetchAnalytics = async () => {
+    const fetchData = async () => {
       try {
-        const response = await api.get('/admin/analytics/summary');
-        setData(response.data);
-      } catch (err) {
-        console.error('Failed to load analytics', err);
+        const [summaryRes, logsRes] = await Promise.all([
+          api.get('/admin/analytics/summary'),
+          api.get('/admin/audit-logs')
+        ]);
+        setData(summaryRes.data);
+        setRecentActivity(logsRes.data.items.slice(0, 5));
+      } catch (err: any) {
+        console.error('Failed to load dashboard data', err);
+        setError('Failed to load dashboard data. Please try again.');
       } finally {
         setLoading(false);
       }
     };
-    fetchAnalytics();
+    fetchData();
   }, []);
 
-  if (loading || !data) {
-    return <div className="p-8">Loading dashboard...</div>;
+  if (loading) {
+    return <div className="p-8 text-center text-gray-500">Loading dashboard...</div>;
+  }
+  
+  if (error || !data) {
+    return <div className="p-8 text-center text-red-500">{error || 'Failed to load data.'}</div>;
   }
 
   const riskData = Object.entries(data.screenings_by_risk).map(([name, value]) => ({ name, value }));
   const trendData = Object.entries(data.screenings_per_day)
     .map(([date, count]) => ({ date: date.slice(5), count }))
     .sort((a, b) => a.date.localeCompare(b.date));
+  const villageData = Object.entries(data.screenings_by_village)
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count);
 
   return (
     <div className="p-8 max-w-7xl mx-auto">
@@ -62,7 +77,7 @@ export default function AdminDashboard() {
         </div>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <div className="bg-white rounded-xl shadow p-6 border-l-4 border-indigo-500">
           <p className="text-sm text-gray-500 font-medium uppercase">Total Screenings</p>
           <p className="text-3xl font-bold text-gray-900 mt-2">{data.total_screenings}</p>
@@ -74,6 +89,10 @@ export default function AdminDashboard() {
         <div className="bg-white rounded-xl shadow p-6 border-l-4 border-red-500">
           <p className="text-sm text-gray-500 font-medium uppercase">Total Referrals</p>
           <p className="text-3xl font-bold text-gray-900 mt-2">{data.referrals}</p>
+        </div>
+        <div className="bg-white rounded-xl shadow p-6 border-l-4 border-amber-500">
+          <p className="text-sm text-gray-500 font-medium uppercase">Pending Follow-ups</p>
+          <p className="text-3xl font-bold text-gray-900 mt-2">{data.pending_followups}</p>
         </div>
       </div>
 
@@ -115,14 +134,72 @@ export default function AdminDashboard() {
         <div className="bg-white rounded-xl shadow p-6">
           <h2 className="text-lg font-bold text-gray-900 mb-4">Screening Activity (Last 30 Days)</h2>
           <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={trendData}>
-                <XAxis dataKey="date" stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} />
-                <Tooltip cursor={{ fill: '#f3f4f6' }} contentStyle={{ borderRadius: '0.5rem', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }} />
-                <Bar dataKey="count" fill="#6366f1" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            {trendData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={trendData}>
+                  <XAxis dataKey="date" stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} />
+                  <Tooltip cursor={{ fill: '#f3f4f6' }} contentStyle={{ borderRadius: '0.5rem', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }} />
+                  <Bar dataKey="count" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-full flex items-center justify-center text-gray-400">No activity in the last 30 days</div>
+            )}
+          </div>
+        </div>
+
+        {/* Screenings By Village */}
+        <div className="bg-white rounded-xl shadow p-6">
+          <h2 className="text-lg font-bold text-gray-900 mb-4">Screenings by Village</h2>
+          <div className="h-64">
+            {villageData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={villageData} layout="vertical" margin={{ left: 20 }}>
+                  <XAxis type="number" stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} />
+                  <YAxis type="category" dataKey="name" stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} />
+                  <Tooltip cursor={{ fill: '#f3f4f6' }} contentStyle={{ borderRadius: '0.5rem', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }} />
+                  <Bar dataKey="count" fill="#10b981" radius={[0, 4, 4, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-full flex items-center justify-center text-gray-400">No village data available</div>
+            )}
+          </div>
+        </div>
+
+        {/* Recent Activity Table */}
+        <div className="bg-white rounded-xl shadow p-6">
+          <h2 className="text-lg font-bold text-gray-900 mb-4">Recent Activity</h2>
+          <div className="overflow-x-auto">
+            {recentActivity.length > 0 ? (
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Action</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Entity</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Time</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {recentActivity.map(log => (
+                    <tr key={log.id}>
+                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
+                        <span className="font-mono bg-gray-100 px-2 py-1 rounded text-xs">{log.action}</span>
+                      </td>
+                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
+                        {log.entity_type} {log.entity_id ? `(${log.entity_id.slice(0,8)}...)` : ''}
+                      </td>
+                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
+                        {new Date(log.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <div className="text-gray-400 text-center py-4">No recent activity</div>
+            )}
           </div>
         </div>
       </div>

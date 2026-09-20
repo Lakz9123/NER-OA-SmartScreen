@@ -25,5 +25,6 @@ class AnalyticsSummary(BaseModel):
     total_screenings: int
     screenings_by_risk: Dict[str, int]
     referrals: int
+    pending_followups: int
     screenings_per_day: Dict[str, int]
     screenings_by_village: Dict[str, int]

@@ -9,12 +9,16 @@ export default function PatientList() {
   const [searchTerm, setSearchTerm] = useState('');
 
   const patients = useLiveQuery(() => db.patients.toArray()) || [];
+  const screenings = useLiveQuery(() => db.screenings.toArray()) || [];
   const isLoading = false;
 
   const filtered = patients.filter(p => 
     p.village_code.toLowerCase().includes(searchTerm.toLowerCase()) || 
     p.id.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  ).map(p => {
+    const pScreenings = screenings.filter(s => s.patient_id === p.id).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    return { ...p, latestScreening: pScreenings[0] };
+  });
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
@@ -82,6 +86,11 @@ export default function PatientList() {
                     <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-slate-100 text-slate-600">
                       {patient.age_band}
                     </span>
+                    {patient.latestScreening && (
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-bold ${patient.latestScreening.followup_status === 'referred' ? 'bg-amber-100 text-amber-700' : patient.latestScreening.followup_status === 'completed' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-700'}`}>
+                        {patient.latestScreening.followup_status || 'pending'}
+                      </span>
+                    )}
                   </div>
                   <div className="text-sm text-slate-500 font-medium flex items-center">
                     <span className="capitalize">{patient.sex}</span>
@@ -90,7 +99,7 @@ export default function PatientList() {
                   </div>
                 </div>
                 <div className="ml-4">
-                  <button className="h-10 w-10 rounded-full bg-white border border-slate-200 text-slate-400 flex items-center justify-center group-hover:border-teal-500 group-hover:text-teal-600 group-hover:bg-teal-50 transition-all shadow-sm hover:shadow">
+                  <button onClick={(e) => { e.stopPropagation(); navigate('/report', { state: { result: patient.latestScreening }}); }} className="h-10 w-10 rounded-full bg-white border border-slate-200 text-slate-400 flex items-center justify-center group-hover:border-teal-500 group-hover:text-teal-600 group-hover:bg-teal-50 transition-all shadow-sm hover:shadow">
                     <Activity className="h-5 w-5" />
                   </button>
                 </div>

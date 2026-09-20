@@ -53,42 +53,27 @@ function App() {
           {/* 1. Login Screen */}
           <Route path="/login" element={<Login />} />
           
-          {/* Protected Routes */}
-          <Route element={<ProtectedRoute />}>
-            {/* 2. Dashboard / Home Screen */}
+          {/* Health Worker Routes */}
+          <Route element={<ProtectedRoute allowedRoles={['hw']} />}>
             <Route path="/dashboard" element={<Dashboard />} />
-            
-            {/* 3. Patient Registration Screen */}
             <Route path="/register-patient" element={<Registration />} />
-            
-            {/* 4. Consent & Privacy Screen */}
             <Route path="/consent" element={<Consent />} />
-            
-            {/* 5, 6, 7. Symptom Questionnaire Screens */}
             <Route path="/questionnaire/part1" element={<QuestionnairePart1 />} />
             <Route path="/questionnaire/part2" element={<QuestionnairePart2 />} />
             <Route path="/questionnaire/part3" element={<QuestionnairePart3 />} />
-            
-            {/* 8, 9, 10. Gait Capture Screens */}
             <Route path="/capture/setup" element={<CaptureSetup />} />
             <Route path="/capture/tracking" element={<CaptureTracking />} />
             <Route path="/capture/recapture" element={<CaptureRecapture />} />
             <Route path="/capture/review" element={<CaptureReview />} />
-            
-            {/* 11, 12. Analysis & Report Screens */}
             <Route path="/analysis" element={<RiskAnalysis />} />
             <Route path="/report" element={<PatientReport />} />
-            
-            {/* 13. Patient Records / History Screen */}
             <Route path="/patients" element={<PatientList />} />
-            
-            {/* 14. Offline Queue & Sync Status Screen */}
             <Route path="/offline-queue" element={<OfflineQueue />} />
-            
-            {/* 15. User Settings & Profile Screen */}
             <Route path="/settings" element={<Settings />} />
+          </Route>
 
-            {/* Admin Routes */}
+          {/* Admin Routes */}
+          <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
             <Route path="/admin/users" element={<AdminUsers />} />
             <Route path="/admin/audit-logs" element={<AdminAuditLogs />} />

@@ -8,7 +8,7 @@ from ..models.patient import Patient
 from ..models.screening import Screening
 from ..schemas.sync import SyncBatchRequest, SyncBatchResponse, SyncRecordResult, SyncStatusResponse
 from ..schemas.screening import ScreeningCreate
-from ..core.deps import get_current_user
+from ..core.deps import get_current_active_user
 from ..services.ml_service import analyze_risk
 from ..core.audit import log_audit
 
@@ -17,7 +17,7 @@ router = APIRouter()
 @router.get("/status", response_model=SyncStatusResponse)
 def get_sync_status(
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_user)
+    current_user = Depends(get_current_active_user)
 ):
     total_patients = db.query(Patient).filter(Patient.registered_by_id == current_user.id).count()
     total_screenings = db.query(Screening).filter(Screening.health_worker_id == current_user.id).count()
@@ -28,7 +28,7 @@ def sync_batch(
     batch: SyncBatchRequest, 
     request: Request,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_user)
+    current_user = Depends(get_current_active_user)
 ):
     synced_patients = 0
     synced_screenings = 0
@@ -66,7 +66,19 @@ def sync_batch(
         try:
             existing = db.query(Screening).filter(Screening.id == s_in.id).first()
             if existing:
-                results.append(SyncRecordResult(id=s_in.id, type='screening', status='already_synced'))
+                updated = False
+                if getattr(s_in, 'followup_status', None) is not None and existing.followup_status != s_in.followup_status:
+                    existing.followup_status = s_in.followup_status
+                    updated = True
+                if getattr(s_in, 'followup_note', None) is not None and existing.followup_note != s_in.followup_note:
+                    existing.followup_note = s_in.followup_note
+                    updated = True
+                
+                if updated:
+                    db.commit()
+                    results.append(SyncRecordResult(id=s_in.id, type='screening', status='updated'))
+                else:
+                    results.append(SyncRecordResult(id=s_in.id, type='screening', status='already_synced'))
                 continue
 
             # Verify patient exists and belongs to current_user

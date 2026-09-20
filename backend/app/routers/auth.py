@@ -15,11 +15,15 @@ router = APIRouter()
 def login_access_token(request: Request, db: Session = Depends(deps.get_db), form_data: OAuth2PasswordRequestForm = Depends()):
     user = db.query(User).filter(User.username == form_data.username).first()
     if not user or not security.verify_password(form_data.password, user.hashed_password):
+        log_audit(db, action="login_failed", user_id=None, entity_type="user", entity_id=form_data.username, request=request)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    if not user.is_active:
+        log_audit(db, action="login_failed", user_id=user.id, entity_type="user", entity_id=str(user.id), request=request)
+        raise HTTPException(status_code=403, detail="Account disabled")
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = security.create_access_token(
         subject=user.username, expires_delta=access_token_expires

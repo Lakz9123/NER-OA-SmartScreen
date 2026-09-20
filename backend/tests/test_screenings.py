@@ -53,3 +53,51 @@ def test_update_followup(client, admin_token):
     data = patch_res.json()
     assert data["followup_status"] == "referred"
     assert data["followup_note"] == "Needs physio"
+
+def test_update_followup_invalid_status(client, admin_token):
+    headers = {"Authorization": f"Bearer {admin_token}"}
+    # Create patient & screening
+    p_res = client.post("/patients/", json={"age_band": "60-70", "sex": "F", "village_code": "V002", "consent_flag": True}, headers=headers)
+    scr_res = client.post("/screenings/", json={"patient_id": p_res.json()["id"], "pain_score": 5, "stiffness_score": 2, "function_score": 10}, headers=headers)
+    scr_id = scr_res.json()["id"]
+    
+    patch_res = client.patch(f"/screenings/{scr_id}/followup", json={"followup_status": "invalid"}, headers=headers)
+    assert patch_res.status_code == 422
+
+def test_update_followup_other_worker(client, admin_token, normal_user_token):
+    headers_admin = {"Authorization": f"Bearer {admin_token}"}
+    headers_normal = {"Authorization": f"Bearer {normal_user_token}"}
+    
+    # Admin creates patient and screening
+    p_res = client.post("/patients/", json={"age_band": "60-70", "sex": "F", "village_code": "V002", "consent_flag": True}, headers=headers_admin)
+    scr_res = client.post("/screenings/", json={"patient_id": p_res.json()["id"], "pain_score": 5, "stiffness_score": 2, "function_score": 10}, headers=headers_admin)
+    scr_id = scr_res.json()["id"]
+    
+    # Normal user tries to update follow-up
+    patch_res = client.patch(f"/screenings/{scr_id}/followup", json={"followup_status": "completed"}, headers=headers_normal)
+    assert patch_res.status_code == 403
+
+def test_audit_logs_no_health_data(client, admin_token):
+    headers = {"Authorization": f"Bearer {admin_token}"}
+    p_res = client.post("/patients/", json={"age_band": "60-70", "sex": "F", "village_code": "V002", "consent_flag": True}, headers=headers)
+    p_id = p_res.json()["id"]
+    
+    scr_res = client.post("/screenings/", json={"patient_id": p_id, "pain_score": 9, "stiffness_score": 9, "function_score": 9}, headers=headers)
+    s_id = scr_res.json()["id"]
+    
+    logs_res = client.get("/admin/audit-logs", headers=headers)
+    assert logs_res.status_code == 200
+    logs = logs_res.json()["items"]
+    
+    # Check patient creation log
+    patient_logs = [l for l in logs if l["action"] == "create" and l["entity_type"] == "patient" and l["entity_id"] == p_id]
+    assert len(patient_logs) > 0
+    # Check screening creation log
+    screening_logs = [l for l in logs if l["action"] == "create" and l["entity_type"] == "screening" and l["entity_id"] == s_id]
+    assert len(screening_logs) > 0
+    
+    # Verify no health data in the whole response
+    logs_str = str(logs)
+    assert "pain_score" not in logs_str
+    assert "sex" not in logs_str
+    assert "consent_flag" not in logs_str

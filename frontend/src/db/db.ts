@@ -29,6 +29,8 @@ export interface ScreeningRecord {
   top_factors?: Record<string, number>;
   sync_status: 'pending' | 'syncing' | 'synced' | 'failed';
   created_at: string;
+  followup_status?: string;
+  followup_note?: string;
 }
 
 export interface OutboxRecord {
