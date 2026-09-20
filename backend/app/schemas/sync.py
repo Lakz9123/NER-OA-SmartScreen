@@ -8,6 +8,7 @@ class PatientSyncItem(BaseModel):
     age_band: str
     sex: str
     village_code: str
+    occupation_type: Optional[str] = None
     consent_flag: bool
     created_at: str
 
@@ -34,7 +35,21 @@ class SyncBatchRequest(BaseModel):
     patients: List[PatientSyncItem] = []
     screenings: List[ScreeningSyncItem] = []
 
+class SyncRecordResult(BaseModel):
+    id: str
+    type: str # 'patient' or 'screening'
+    status: str # 'created', 'already_synced', or 'failed'
+    reason: Optional[str] = None
+    server_risk_level: Optional[str] = None
+    server_risk_score: Optional[float] = None
+    server_model_version: Optional[str] = None
+    server_explainability_data: Optional[dict] = None
+
 class SyncBatchResponse(BaseModel):
     synced_patients: int
     synced_screenings: int
-    errors: List[str] = []
+    results: List[SyncRecordResult] = []
+
+class SyncStatusResponse(BaseModel):
+    total_patients: int
+    total_screenings: int

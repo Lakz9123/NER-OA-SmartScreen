@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, WifiOff, RefreshCw, CheckCircle, Database } from 'lucide-react';
+import { ChevronLeft, WifiOff, RefreshCw, CheckCircle, Database, AlertCircle } from 'lucide-react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db/db';
 import { syncOutbox } from '../services/syncService';
@@ -9,27 +9,36 @@ export default function OfflineQueue() {
   const navigate = useNavigate();
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncStatus, setSyncStatus] = useState<'idle' | 'success'>('idle');
+  const [syncMessage, setSyncMessage] = useState('');
 
-  const queue = useLiveQuery(() => db.outbox.toArray()) || [];
+  const outbox = useLiveQuery(() => db.outbox.toArray()) || [];
+  const syncedPatients = useLiveQuery(() => db.patients.where('sync_status').equals('synced').limit(10).toArray()) || [];
+  const syncedScreenings = useLiveQuery(() => db.screenings.where('sync_status').equals('synced').limit(10).toArray()) || [];
 
   const handleSync = async () => {
     setIsSyncing(true);
     setSyncStatus('idle');
+    setSyncMessage('');
     
     try {
       const result = await syncOutbox();
       if (result.success) {
         setSyncStatus('success');
       } else {
-        alert(result.message);
+        setSyncMessage(result.message);
         setSyncStatus('idle');
       }
     } catch (e: any) {
-      alert("Network error. Try again later.");
+      setSyncMessage("Network error. Try again later.");
       setSyncStatus('idle');
     } finally {
       setIsSyncing(false);
     }
+  };
+
+  const retryItem = async (id: string) => {
+    await db.outbox.update(id, { status: 'pending' });
+    handleSync();
   };
 
   return (
@@ -60,7 +69,7 @@ export default function OfflineQueue() {
           </div>
           
           <h2 className="text-3xl font-black text-slate-900 mb-3 relative z-10">
-            {queue.length} Pending Records
+            {outbox.length} Pending Records
           </h2>
           <p className="text-slate-500 font-medium max-w-md mx-auto relative z-10">
             Records captured while offline are stored securely on this device. Sync them when you have internet access.
@@ -68,7 +77,7 @@ export default function OfflineQueue() {
 
           <button
             onClick={handleSync}
-            disabled={queue.length === 0 || isSyncing}
+            disabled={outbox.length === 0 || isSyncing}
             className="mt-8 flex w-full max-w-xs mx-auto items-center justify-center rounded-2xl bg-slate-900 py-4 px-4 text-base font-bold text-white shadow-xl shadow-slate-900/20 hover:bg-teal-700 hover:shadow-teal-700/30 focus:outline-none focus:ring-2 focus:ring-teal-600 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed group relative z-10"
           >
             {isSyncing ? (
@@ -85,6 +94,12 @@ export default function OfflineQueue() {
               </>
             )}
           </button>
+
+          {syncMessage && (
+             <div className="mt-4 text-sm font-medium text-red-500 bg-red-50 py-2 px-4 rounded-lg inline-block">
+               {syncMessage}
+             </div>
+          )}
         </div>
 
         {/* Queue List */}
@@ -93,28 +108,82 @@ export default function OfflineQueue() {
             Queued Items
           </h3>
           
-          {queue.length === 0 ? (
+          {outbox.length === 0 && syncedPatients.length === 0 && syncedScreenings.length === 0 ? (
             <div className="text-center py-12 bg-white rounded-3xl border border-dashed border-slate-300 animate-fade-in">
               <CheckCircle className="h-12 w-12 text-emerald-400 mx-auto mb-3" />
-              <p className="text-slate-500 font-medium">All records are synced.</p>
+              <p className="text-slate-500 font-medium">No records found.</p>
             </div>
           ) : (
             <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden divide-y divide-slate-100">
-              {queue.map((item) => (
+              
+              {/* OUTBOX ITEMS */}
+              {outbox.map((item) => (
                 <div key={item.id} className="p-4 sm:p-5 flex items-center hover:bg-slate-50 transition-colors">
                   <div className="flex-1">
                     <div className="flex items-center space-x-3 mb-1">
                       <span className="font-bold text-slate-900">{item.type}</span>
-                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-amber-100 text-amber-800">
-                        PENDING
-                      </span>
+                      {item.status === 'pending' || item.status === 'syncing' ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-amber-100 text-amber-800">
+                           PENDING
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-red-100 text-red-800">
+                           FAILED
+                        </span>
+                      )}
                     </div>
                     <div className="text-sm text-slate-500 font-medium">
                       {new Date(item.created_at).toLocaleString()}
                     </div>
+                    {item.status === 'failed' && item.reason && (
+                      <div className="text-xs text-red-600 mt-1 flex items-center">
+                        <AlertCircle className="w-3 h-3 mr-1" />
+                        {item.reason}
+                      </div>
+                    )}
+                  </div>
+                  {item.status === 'failed' && (
+                    <button onClick={() => retryItem(item.id)} className="ml-4 text-sm font-bold text-blue-600 hover:text-blue-800 underline">
+                      Retry
+                    </button>
+                  )}
+                </div>
+              ))}
+
+              {/* SYNCED PATIENTS */}
+              {syncedPatients.map((p) => (
+                <div key={p.id} className="p-4 sm:p-5 flex items-center bg-slate-50/50">
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-3 mb-1">
+                      <span className="font-bold text-slate-900">PatientSync</span>
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-emerald-100 text-emerald-800">
+                        SYNCED
+                      </span>
+                    </div>
+                    <div className="text-sm text-slate-500 font-medium">
+                      {new Date(p.created_at).toLocaleString()}
+                    </div>
                   </div>
                 </div>
               ))}
+
+              {/* SYNCED SCREENINGS */}
+              {syncedScreenings.map((s) => (
+                <div key={s.id} className="p-4 sm:p-5 flex items-center bg-slate-50/50">
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-3 mb-1">
+                      <span className="font-bold text-slate-900">ScreeningSync</span>
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-emerald-100 text-emerald-800">
+                        SYNCED
+                      </span>
+                    </div>
+                    <div className="text-sm text-slate-500 font-medium">
+                      {new Date(s.created_at).toLocaleString()}
+                    </div>
+                  </div>
+                </div>
+              ))}
+              
             </div>
           )}
         </div>

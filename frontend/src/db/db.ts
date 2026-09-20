@@ -5,6 +5,7 @@ export interface PatientRecord {
   age_band: string;
   sex: string;
   village_code: string;
+  occupation_type?: string;
   consent_flag: boolean;
   sync_status: 'pending' | 'syncing' | 'synced' | 'failed';
   created_at: string;
@@ -35,6 +36,7 @@ export interface OutboxRecord {
   type: 'PatientSync' | 'ScreeningSync';
   payload: any;
   status: 'pending' | 'syncing' | 'failed';
+  reason?: string;
   created_at: string;
 }
 

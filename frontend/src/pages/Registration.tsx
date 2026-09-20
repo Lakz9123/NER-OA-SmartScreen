@@ -29,6 +29,7 @@ export default function Registration() {
         age_band: formData.age_band,
         sex: formData.sex,
         village_code: formData.village_code,
+        occupation_type: formData.occupation_type,
         consent_flag: true,
         sync_status: 'pending' as const,
         created_at: now

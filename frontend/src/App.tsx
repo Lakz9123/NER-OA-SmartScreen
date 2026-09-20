@@ -16,10 +16,13 @@ import PatientList from './pages/PatientList';
 import OfflineQueue from './pages/OfflineQueue';
 import Settings from './pages/Settings';
 import ProtectedRoute from './components/ProtectedRoute';
-import { syncOutbox } from './services/syncService';
+import { syncOutbox, resetSyncingItems } from './services/syncService';
 
 function App() {
   useEffect(() => {
+    // Reset stuck items on startup
+    resetSyncingItems().catch(console.error);
+
     // Attempt automatic background sync every 30 seconds
     const interval = setInterval(() => {
       if (navigator.onLine) {
