@@ -32,3 +32,7 @@ class Screening(Base):
     
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     is_synced = Column(Boolean, default=True) # Used if synced from offline
+    
+    # Admin Follow-up
+    followup_status = Column(String, default="pending") # pending, referred, completed
+    followup_note = Column(String, nullable=True)

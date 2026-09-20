@@ -1,6 +1,6 @@
 import logging
 import dateutil.parser
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 from typing import List
 from ..core.database import get_db
@@ -10,6 +10,7 @@ from ..schemas.sync import SyncBatchRequest, SyncBatchResponse, SyncRecordResult
 from ..schemas.screening import ScreeningCreate
 from ..core.deps import get_current_user
 from ..services.ml_service import analyze_risk
+from ..core.audit import log_audit
 
 router = APIRouter()
 
@@ -25,6 +26,7 @@ def get_sync_status(
 @router.post("/batch", response_model=SyncBatchResponse)
 def sync_batch(
     batch: SyncBatchRequest, 
+    request: Request,
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
@@ -129,6 +131,8 @@ def sync_batch(
             db.rollback()
             logging.exception(f"Error syncing screening {s_in.id}")
             results.append(SyncRecordResult(id=s_in.id, type='screening', status='failed', reason="An unexpected error occurred."))
+
+    log_audit(db, action="sync", user_id=current_user.id, entity_type="sync_batch", entity_id=None, request=request)
 
     return SyncBatchResponse(
         synced_patients=synced_patients,

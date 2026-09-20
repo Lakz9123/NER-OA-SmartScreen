@@ -18,7 +18,16 @@ export default function Login() {
     try {
       const { access_token } = await login(username, password);
       localStorage.setItem('token', access_token);
-      navigate('/dashboard');
+      
+      // Need to get user role to route correctly
+      // We can fetch /users/me
+      const { getMe } = await import('../api/client');
+      const user = await getMe();
+      if (user.role === 'admin') {
+        navigate('/admin/dashboard');
+      } else {
+        navigate('/dashboard');
+      }
     } catch (err: any) {
       setError(err.message || 'Incorrect username or password');
     } finally {

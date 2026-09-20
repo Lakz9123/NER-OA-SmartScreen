@@ -24,6 +24,10 @@ class ScreeningUpdate(BaseModel):
     model_version: str
     explainability_data: Optional[Any] = None
 
+class ScreeningFollowupUpdate(BaseModel):
+    followup_status: str
+    followup_note: Optional[str] = None
+
 class Screening(ScreeningBase):
     id: str
     health_worker_id: int
@@ -33,6 +37,8 @@ class Screening(ScreeningBase):
     explainability_data: Optional[Any] = None
     created_at: datetime
     is_synced: bool
+    followup_status: str
+    followup_note: Optional[str] = None
 
     class Config:
         orm_mode = True

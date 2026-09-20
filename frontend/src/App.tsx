@@ -16,6 +16,9 @@ import PatientReport from './pages/PatientReport';
 import PatientList from './pages/PatientList';
 import OfflineQueue from './pages/OfflineQueue';
 import Settings from './pages/Settings';
+import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminUsers from './pages/admin/AdminUsers';
+import AdminAuditLogs from './pages/admin/AdminAuditLogs';
 import ProtectedRoute from './components/ProtectedRoute';
 import { syncOutbox, resetSyncingItems } from './services/syncService';
 
@@ -84,6 +87,11 @@ function App() {
             
             {/* 15. User Settings & Profile Screen */}
             <Route path="/settings" element={<Settings />} />
+
+            {/* Admin Routes */}
+            <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            <Route path="/admin/users" element={<AdminUsers />} />
+            <Route path="/admin/audit-logs" element={<AdminAuditLogs />} />
           </Route>
           
           {/* Fallback route */}
