@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, User, Globe, Shield, Database, Bell, LogOut, ChevronRight } from 'lucide-react';
+import { ChevronLeft, Globe, Shield, Database, Bell, LogOut, ChevronRight } from 'lucide-react';
 
 export default function Settings() {
   const navigate = useNavigate();

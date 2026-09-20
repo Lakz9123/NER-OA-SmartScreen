@@ -4,7 +4,7 @@ interface ProtectedRouteProps {
   requiredRole?: string;
 }
 
-export default function ProtectedRoute({ requiredRole }: ProtectedRouteProps) {
+export default function ProtectedRoute() {
   const token = localStorage.getItem('token');
   // Simple check for now. In a full app, we would also verify the token signature
   // and check the user's role against requiredRole.

@@ -13,7 +13,7 @@ export default function CaptureSetup() {
     try {
       await navigator.mediaDevices.getUserMedia({ video: true });
       setHasPermissions(true);
-    } catch (err) {
+    } catch {
       alert("Camera permission is required for the screening.");
     }
   };

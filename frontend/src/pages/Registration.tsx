@@ -24,7 +24,7 @@ export default function Registration() {
       const payload = { ...formData, consent_flag: true }; // Enforce consent here or on next screen, but next screen handles policy.
       const response = await registerPatient(payload);
       navigate('/consent', { state: { patientId: response.id || 'demo' } });
-    } catch (err: any) {
+    } catch {
       const offlineId = 'offline-' + Date.now();
       const offlineQueue = JSON.parse(localStorage.getItem('offlineQueue') || '[]');
       offlineQueue.push({

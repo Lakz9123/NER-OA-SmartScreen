@@ -24,7 +24,6 @@ export default function PatientReport() {
   
   const isHighRisk = risk_level === 'High';
   const riskColor = isHighRisk ? 'text-rose-600 bg-rose-50 border-rose-200' : risk_level === 'Moderate' ? 'text-amber-600 bg-amber-50 border-amber-200' : 'text-emerald-600 bg-emerald-50 border-emerald-200';
-  const riskText = isHighRisk ? 'text-rose-600' : risk_level === 'Moderate' ? 'text-amber-600' : 'text-emerald-600';
   
   const toggleLang = () => {
     i18n.changeLanguage(i18n.language === 'en' ? 'as' : 'en');

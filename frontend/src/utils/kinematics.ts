@@ -23,6 +23,7 @@ export class KinematicsTracker {
   ankleDistances: number[] = [];
   stepCount = 0;
   isStepActive = false;
+  stepTimestamps: number[] = [];
 
   addFrame(landmarks: Landmark[], timestampMs: number) {
     if (!landmarks || landmarks.length < 33) return;
@@ -54,6 +55,7 @@ export class KinematicsTracker {
       if (dist > 0.1 && !this.isStepActive) {
         this.isStepActive = true;
         this.stepCount++;
+        this.stepTimestamps.push(timestampMs);
       } else if (dist < 0.05 && this.isStepActive) {
         this.isStepActive = false;
       }
@@ -77,14 +79,35 @@ export class KinematicsTracker {
     const avgLeftAngle = this.leftKneeAngles.length ? this.leftKneeAngles.reduce((a,b)=>a+b,0)/this.leftKneeAngles.length : 180;
     const avgRightAngle = this.rightKneeAngles.length ? this.rightKneeAngles.reduce((a,b)=>a+b,0)/this.rightKneeAngles.length : 180;
 
+    // Step time from timestamps of steps
+    let step_time = 0;
+    if (this.stepTimestamps.length >= 2) {
+      const stepDurations = [];
+      for (let i = 1; i < this.stepTimestamps.length; i++) {
+        stepDurations.push(this.stepTimestamps[i] - this.stepTimestamps[i-1]);
+      }
+      step_time = (stepDurations.reduce((a,b)=>a+b,0) / stepDurations.length) / 1000;
+    }
+
+    const romLeft = parseFloat((leftMax - leftMin).toFixed(2));
+    const romRight = parseFloat((rightMax - rightMin).toFixed(2));
+    
+    // Symmetry index from ROM
+    let symmetry_index = 1.0;
+    if (romLeft > 0 && romRight > 0) {
+      symmetry_index = Math.min(romLeft, romRight) / Math.max(romLeft, romRight);
+    }
+
     return {
-      knee_angle_left: parseFloat((180 - avgLeftAngle).toFixed(2)), // degrees of flexion
+      knee_angle_left: parseFloat((180 - avgLeftAngle).toFixed(2)),
       knee_angle_right: parseFloat((180 - avgRightAngle).toFixed(2)),
-      knee_rom_left: parseFloat((leftMax - leftMin).toFixed(2)),
-      knee_rom_right: parseFloat((rightMax - rightMin).toFixed(2)),
+      knee_rom_left: romLeft,
+      knee_rom_right: romRight,
+      symmetry_index: parseFloat(symmetry_index.toFixed(3)),
       cadence: parseFloat(cadence.toFixed(2)),
-      gait_speed: parseFloat(((cadence / 60) * 0.65).toFixed(2)), // Fake stride length 0.65m for speed
-      step_length: 0.65
+      gait_speed: parseFloat(((cadence / 60) * 0.65).toFixed(2)), 
+      step_length: 0.65,
+      step_time: parseFloat(step_time.toFixed(3))
     };
   }
 }

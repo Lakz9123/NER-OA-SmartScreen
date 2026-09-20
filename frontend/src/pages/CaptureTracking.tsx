@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { PoseLandmarker, FilesetResolver, DrawingUtils } from '@mediapipe/tasks-vision';
-import { X, Activity, Scan, Maximize, AlertTriangle } from 'lucide-react';
+import { X, Activity, Scan, AlertTriangle } from 'lucide-react';
 import { KinematicsTracker } from '../utils/kinematics';
 import type { Landmark } from '../utils/kinematics';
 

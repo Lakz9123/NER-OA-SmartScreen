@@ -13,25 +13,20 @@ export default function RiskAnalysis() {
     if (result) {
       setData(result);
     } else {
-      // For demo, load a fake state if visited directly without data
-      setData({
-        risk_level: "High",
-        risk_score: 0.89,
-        model_version: "v1.2",
-        pain_score: 8,
-        function_score: 10
-      });
+      navigate('/dashboard');
     }
-  }, [result]);
+  }, [result, navigate]);
 
   const riskLevel = data?.risk_level || 'Moderate';
   
   // Theme based on risk level
-  const theme = {
+  type RiskLevel = 'Low' | 'Moderate' | 'High';
+  const theme: Record<RiskLevel | string, any> = {
     Low: { color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-200', gradient: 'from-emerald-400 to-teal-500' },
     Moderate: { color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-200', gradient: 'from-amber-400 to-orange-500' },
     High: { color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-200', gradient: 'from-red-500 to-rose-600' }
-  }[riskLevel] || { color: 'text-slate-600', bg: 'bg-slate-50', border: 'border-slate-200', gradient: 'from-slate-400 to-slate-500' };
+  };
+  const currentTheme = theme[riskLevel] || { color: 'text-slate-600', bg: 'bg-slate-50', border: 'border-slate-200', gradient: 'from-slate-400 to-slate-500' };
 
   if (!data) return null;
 
@@ -55,7 +50,7 @@ export default function RiskAnalysis() {
 
         {/* Main Risk Banner */}
         <div className="bg-white rounded-3xl shadow-md border border-slate-100 overflow-hidden text-center p-10 relative">
-          <div className={`absolute top-0 left-0 right-0 h-2 bg-gradient-to-r hover:opacity-90 transition-opacity duration-300 ${theme.gradient}`}></div>
+          <div className={`absolute top-0 left-0 right-0 h-2 bg-gradient-to-r hover:opacity-90 transition-opacity duration-300 ${currentTheme.gradient}`}></div>
           
           <h2 className="text-sm font-bold tracking-widest text-slate-400 uppercase mb-4">Preliminary Risk Indication</h2>
           
@@ -71,7 +66,7 @@ export default function RiskAnalysis() {
               />
             </svg>
             <div className="absolute flex flex-col items-center">
-              <span className={`text-4xl font-extrabold ${theme.color}`}>{riskLevel}</span>
+              <span className={`text-4xl font-extrabold ${currentTheme.color}`}>{riskLevel}</span>
               <span className="text-sm font-medium text-slate-500 mt-1">Risk</span>
             </div>
           </div>
@@ -96,7 +91,7 @@ export default function RiskAnalysis() {
           </p>
 
           <p className="text-slate-600 max-w-md mx-auto mt-4">
-            Based on the questionnaire responses and kinematic gait analysis, the patient exhibits patterns consistent with a <strong className={theme.color}>{riskLevel.toLowerCase()}</strong> risk of osteoarthritis.
+            Based on the questionnaire responses and kinematic gait analysis, the patient exhibits patterns consistent with a <strong className={currentTheme.color}>{riskLevel.toLowerCase()}</strong> risk of osteoarthritis.
           </p>
         </div>
 
@@ -142,6 +137,44 @@ export default function RiskAnalysis() {
             <p className="text-sm text-slate-500 ml-11 mt-4">High WOMAC physical function difficulty reported.</p>
           </div>
         </div>
+
+        {data.explainability_data?.top_factors && Object.keys(data.explainability_data.top_factors).length > 0 && (
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mt-4">
+            <h3 className="text-lg font-bold text-slate-800 mb-4">Risk Contributing Factors</h3>
+            <div className="space-y-3">
+              {Object.entries(data.explainability_data.top_factors)
+                .sort(([, a], [, b]) => Math.abs(Number(b)) - Math.abs(Number(a)))
+                .map(([factor, weight]) => {
+                  const numWeight = Number(weight);
+                  const isPositive = numWeight > 0;
+                  const label = factor.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                  return (
+                    <div key={factor} className="flex flex-col">
+                      <div className="flex justify-between text-xs font-bold text-slate-500 mb-1">
+                        <span>{label}</span>
+                        <span className={isPositive ? 'text-rose-500' : 'text-emerald-500'}>
+                          {isPositive ? '+' : ''}{numWeight.toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="w-full bg-slate-100 rounded-full h-1.5 flex overflow-hidden">
+                        {isPositive ? (
+                          <>
+                            <div className="w-1/2 bg-transparent"></div>
+                            <div className="bg-rose-400 h-full" style={{ width: `${Math.min(Math.abs(numWeight) * 100, 50)}%` }}></div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="bg-emerald-400 h-full ml-auto" style={{ width: `${Math.min(Math.abs(numWeight) * 100, 50)}%` }}></div>
+                            <div className="w-1/2 bg-transparent"></div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Action Buttons */}
         <div className="pt-6 space-y-3">

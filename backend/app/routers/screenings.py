@@ -15,8 +15,10 @@ def create_screening(
     db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_active_user)
 ):
-    # Analyze risk
-    risk_result = analyze_risk(screening_in)
+    try:
+        risk_result = analyze_risk(screening_in)
+    except Exception as e:
+        raise HTTPException(status_code=422, detail=f"Validation or ML Inference Error: {str(e)}")
     
     screening = Screening(
         **screening_in.dict(),

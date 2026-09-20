@@ -62,7 +62,7 @@ def analyze_risk(data: ScreeningCreate) -> dict:
     
     explainability_data = {
         "warning": "trained on synthetic sample data, not clinically validated",
-        "top_factors": []
+        "top_factors": {}
     }
     
     # Get top 3 factors driving the risk up
@@ -71,10 +71,7 @@ def analyze_risk(data: ScreeningCreate) -> dict:
     
     for feature, value in top_factors.items():
         if value > 0:
-            explainability_data["top_factors"].append({
-                "feature": feature,
-                "contribution": float(value)
-            })
+            explainability_data["top_factors"][feature] = float(value)
             
     return {
         "risk_level": risk_level,

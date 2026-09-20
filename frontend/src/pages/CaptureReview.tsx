@@ -22,25 +22,25 @@ export default function CaptureReview() {
   const handleProcess = async () => {
     setIsSubmitting(true);
     setError('');
+    const pain_score = answers.painLevel || 0;
+    const stiffness_score = answers.stiffnessDuration === '>30' ? 2 : 1;
+    const function_score = Object.values(answers.mobility || {}).reduce((a: any, b: any) => a + b, 0);
+
+    const payload = {
+      patient_id: patientId,
+      pain_score,
+      stiffness_score,
+      function_score,
+      knee_angle_left: telemetryData.knee_angle_left, 
+      knee_angle_right: telemetryData.knee_angle_right,
+      knee_rom_left: telemetryData.knee_rom_left,
+      knee_rom_right: telemetryData.knee_rom_right,
+      symmetry_index: telemetryData.symmetry_index,
+      cadence: telemetryData.cadence,
+      step_time: telemetryData.step_time,
+    };
+
     try {
-      const pain_score = answers.painLevel || 0;
-      const stiffness_score = answers.stiffnessDuration === '>30' ? 2 : 1;
-      const function_score = Object.values(answers.mobility || {}).reduce((a: any, b: any) => a + b, 0);
-
-      const payload = {
-        patient_id: patientId,
-        pain_score,
-        stiffness_score,
-        function_score,
-        knee_angle_left: telemetryData.knee_flexion_angle, // In real app, we'd use affectedKnee to route this
-        knee_angle_right: telemetryData.knee_flexion_angle,
-        knee_rom_left: telemetryData.knee_flexion_angle,
-        knee_rom_right: telemetryData.knee_flexion_angle,
-        symmetry_index: 0.95, // Fake for now
-        cadence: telemetryData.gait_speed * 100, // Fake calculation
-        step_time: telemetryData.step_length / telemetryData.gait_speed,
-      };
-
       const response = await createScreening(payload);
       
       // Navigate to analysis with the real screening result
@@ -60,7 +60,7 @@ export default function CaptureReview() {
       
       // Give the user a moment to read the error before redirecting
       setTimeout(() => {
-        navigate('/offline');
+        navigate('/offline-queue');
       }, 2000);
     }
   };
