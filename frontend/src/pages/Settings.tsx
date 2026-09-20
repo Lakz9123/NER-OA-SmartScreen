@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Globe, Shield, Database, Bell, LogOut, ChevronRight, Terminal } from 'lucide-react';
+import { Shield, Database, Bell, LogOut, ChevronRight, Terminal } from 'lucide-react';
 import { logout } from '../utils/auth';
 import { useTranslation } from 'react-i18next';
-import LanguageSwitcher from '../components/LanguageSwitcher';
 
 export default function Settings() {
   const { t } = useTranslation();
@@ -40,15 +39,6 @@ export default function Settings() {
           <div className="animate-fade-in-up-delay-1">
             <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-3 ml-2">{t('preferences', 'Preferences')}</h3>
             <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
-              <div className="w-full flex items-center justify-between p-5 border-b border-slate-50 hover:bg-slate-50 transition-colors group">
-                <div className="flex items-center">
-                  <Globe className="h-5 w-5 text-slate-400 mr-4 group-hover:text-teal-600 transition-colors" />
-                  <span className="font-bold text-slate-700 group-hover:text-slate-900">{t('language', 'Language')}</span>
-                </div>
-                <div className="flex items-center">
-                  <LanguageSwitcher />
-                </div>
-              </div>
               
               <button className="w-full flex items-center justify-between p-5 hover:bg-slate-50 transition-colors group">
                 <div className="flex items-center">

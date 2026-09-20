@@ -2,6 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
+@import './translate.css';
+
 @layer base {
   body {
     @apply font-sans antialiased text-gray-900 bg-gray-50;
