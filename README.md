@@ -38,6 +38,15 @@ uvicorn app.main:app --reload --port 8000
 ```
 *Wait for the DB to be created. You can optionally run `python seed.py` to create demo users.*
 
+### Test Logins and Roles
+This app has two distinct roles:
+1. **Health Worker** (`health_worker`): Works in the field on a mobile device, often offline. Performs screenings and registers patients.
+2. **Admin** (`admin`): Works on a laptop with internet access. Monitors the system via dashboard, manages users, and views audit logs. Admins cannot perform screenings.
+
+**Seed Users (from `backend/seed.py`)**:
+- Health Worker: Username: `hw_asha`, Password: `password123`
+- Admin: Username: `admin`, Password: `admin123`
+
 ### 2. Frontend Setup
 Navigate to the `frontend` directory:
 ```bash
