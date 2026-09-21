@@ -35,20 +35,27 @@
         });
         
         // 2. Remove any top spacing Google tries to force on the body or html
-        if (document.body && document.body.style.top) document.body.style.top = '0px';
-        if (document.documentElement && document.documentElement.style.top) document.documentElement.style.top = '0px';
+        // IMPORTANT: Check before setting to prevent infinite MutationObserver loop!
+        if (document.body && document.body.style.top && document.body.style.top !== '0px') {
+            document.body.style.top = '0px';
+        }
+        if (document.documentElement && document.documentElement.style.top && document.documentElement.style.top !== '0px') {
+            document.documentElement.style.top = '0px';
+        }
         
         // 3. Hide all other floating popup elements without removing them
         const popups = document.querySelectorAll('.goog-te-spinner-pos, .goog-te-balloon-frame, .VIpgJd-ZVi9od-aZ2wEe-wOHMyf, .VIpgJd-ZVi9od-aZ2wEe-wOHMyf-ti6hGc, #goog-gt-tt');
         popups.forEach(el => {
-          el.style.cssText = 'display: none !important; visibility: hidden !important; opacity: 0 !important; pointer-events: none !important;';
+          if (el.style.display !== 'none') {
+            el.style.cssText = 'display: none !important; visibility: hidden !important; opacity: 0 !important; pointer-events: none !important;';
+          }
         });
       });
 
       // Start observing as soon as body is available
       window.addEventListener('DOMContentLoaded', () => {
-        observer.observe(document.body, { childList: true, attributes: true, subtree: true, attributeFilter: ['style'] });
-        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['style'] });
+        observer.observe(document.body, { childList: true, attributes: true, subtree: true, attributeFilter: ['style', 'class'] });
+        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['style', 'class'] });
       });
     </script>
     <script type="module" src="/src/main.tsx"></script>
