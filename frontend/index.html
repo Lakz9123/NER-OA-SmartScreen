@@ -25,6 +25,28 @@
     </script>
     <script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 
+    <!-- Clean up Google Translate UI forcefully -->
+    <script>
+      const observer = new MutationObserver(() => {
+        // 1. Remove the top iframe banner entirely from DOM
+        const banners = document.querySelectorAll('.skiptranslate > iframe.skiptranslate, iframe[id=":1.container"]');
+        banners.forEach(b => b.remove());
+        
+        // 2. Remove any top spacing Google tries to force on the body or html
+        if (document.body && document.body.style.top) document.body.style.top = '0px';
+        if (document.documentElement && document.documentElement.style.top) document.documentElement.style.top = '0px';
+        
+        // 3. Remove all other floating popup elements
+        const popups = document.querySelectorAll('.goog-te-spinner-pos, .goog-te-balloon-frame, .VIpgJd-ZVi9od-aZ2wEe-wOHMyf, .VIpgJd-ZVi9od-aZ2wEe-wOHMyf-ti6hGc, #goog-gt-tt');
+        popups.forEach(el => el.remove());
+      });
+
+      // Start observing as soon as body is available
+      window.addEventListener('DOMContentLoaded', () => {
+        observer.observe(document.body, { childList: true, attributes: true, subtree: true, attributeFilter: ['style'] });
+        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['style'] });
+      });
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
