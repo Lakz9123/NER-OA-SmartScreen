@@ -28,11 +28,11 @@
     <!-- Clean up Google Translate UI forcefully without breaking the engine -->
     <script>
       const observer = new MutationObserver(() => {
-        // 1. Hide the top iframe banner without removing it from DOM
+        // 1. Hide the top iframe banner off-screen to avoid freezing the script
         const banners = document.querySelectorAll('.skiptranslate > iframe.skiptranslate, iframe[id=":1.container"]');
         banners.forEach(b => {
-          if (b.style.display !== 'none') {
-            b.style.cssText = 'display: none !important; visibility: hidden !important; opacity: 0 !important; width: 0 !important; height: 0 !important;';
+          if (b.style.top !== '-9999px') {
+            b.style.cssText = 'position: absolute !important; top: -9999px !important; left: -9999px !important; opacity: 0 !important; width: 1px !important; height: 1px !important; pointer-events: none !important;';
           }
         });
         
