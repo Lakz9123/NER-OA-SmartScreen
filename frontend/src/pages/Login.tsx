@@ -107,7 +107,7 @@ export default function Login() {
             <form onSubmit={handleLogin} className="space-y-6">
               <div className="space-y-1.5">
                 <label className="block text-sm font-semibold text-slate-700 ml-1">
-                  {t('username', 'Username')}
+                  {t('username', t('username_label'))}
                 </label>
                 <div className="relative group">
                   <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none transition-colors group-focus-within:text-teal-600 text-slate-400">
@@ -117,7 +117,7 @@ export default function Login() {
                     type="text"
                     required
                     className="block w-full rounded-2xl border-0 bg-slate-50 py-4 pl-11 pr-4 text-slate-900 ring-1 ring-inset ring-slate-200 focus:ring-2 focus:ring-inset focus:ring-teal-600 transition-all font-medium sm:text-sm"
-                    placeholder={t('enter_username', 'Enter your username')}
+                    placeholder={t('enter_username', t('username_placeholder'))}
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                   />
@@ -127,7 +127,7 @@ export default function Login() {
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between ml-1">
                   <label className="block text-sm font-semibold text-slate-700">
-                    {t('password', 'Password')}
+                    {t('password', t('password_label'))}
                   </label>
                   <a href="#" className="text-sm font-semibold text-teal-600 hover:text-teal-500 transition-colors">
                     {t('forgot_password', 'Forgot password?')}
@@ -156,7 +156,7 @@ export default function Login() {
                 {isLoading ? (
                   <div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                 ) : (
-                  t('sign_in', 'Sign In')
+                  t('sign_in', t('login_button'))
                 )}
               </button>
             </form>

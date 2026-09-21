@@ -19,7 +19,7 @@ export default function RiskAnalysis() {
     }
   }, [result, navigate]);
 
-  const riskLevel = data?.risk_level || 'Moderate';
+  const riskLevel = data?.risk_level || t('moderate');
   
   // Theme based on risk level
   type RiskLevel = 'Low' | 'Moderate' | 'High';
@@ -61,9 +61,9 @@ export default function RiskAnalysis() {
               <circle cx="50" cy="50" r="45" fill="none" stroke="#F1F5F9" strokeWidth="8" />
               <circle 
                 cx="50" cy="50" r="45" fill="none" 
-                stroke={riskLevel === 'Low' ? '#10B981' : riskLevel === 'Moderate' ? '#F59E0B' : '#EF4444'} 
+                stroke={riskLevel === t('low') ? '#10B981' : riskLevel === t('moderate') ? '#F59E0B' : '#EF4444'} 
                 strokeWidth="8" strokeLinecap="round" strokeDasharray="283" 
-                strokeDashoffset={riskLevel === 'Low' ? 200 : riskLevel === 'Moderate' ? 141 : 40} 
+                strokeDashoffset={riskLevel === t('low') ? 200 : riskLevel === t('moderate') ? 141 : 40} 
                 className="transition-all duration-1000 ease-out"
               />
             </svg>

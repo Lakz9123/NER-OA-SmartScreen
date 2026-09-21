@@ -40,7 +40,7 @@ export default function PatientList() {
             className="flex items-center space-x-1 text-white font-bold text-sm bg-teal-600 hover:bg-teal-500 px-3 py-1.5 rounded-lg transition-colors shadow-sm"
           >
             <Plus className="h-4 w-4" />
-            <span className="hidden sm:inline">{t('new_patient', 'New Patient')}</span>
+            <span className="hidden sm:inline">{t('new_patient', t('new_patient'))}</span>
           </button>
         </div>
       </header>
@@ -116,7 +116,7 @@ export default function PatientList() {
           ) : (
             <div className="p-12 text-center text-slate-500 bg-white rounded-3xl border border-dashed border-slate-300">
               <UserCircle className="h-12 w-12 mx-auto text-slate-300 mb-3" />
-              <p className="font-medium">{t('no_patients_found', 'No patients found.')}</p>
+              <p className="font-medium">{t('no_patients_found', t('no_patients'))}</p>
             </div>
           )}
         </div>

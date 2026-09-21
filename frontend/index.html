@@ -4,61 +4,11 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Noto+Sans+Meetei+Mayek:wght@400;500;600;700&family=Noto+Sans+Bengali:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap" rel="stylesheet">
     <title>NER-OA SmartScreen</title>
   </head>
   <body>
     <div id="root"></div>
-    <!-- Google Translate API -->
-    <div id="google_translate_element"></div>
-    <script type="text/javascript">
-      function googleTranslateElementInit() {
-        new google.translate.TranslateElement({
-          pageLanguage: 'en',
-          layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
-          autoDisplay: false
-        }, 'google_translate_element');
-      }
-    </script>
-    <script defer type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 
-    <!-- Clean up Google Translate UI forcefully without breaking the engine -->
-    <script>
-      const observer = new MutationObserver(() => {
-        // 1. Hide the top iframe banner off-screen to avoid freezing the script
-        const banners = document.querySelectorAll('.skiptranslate > iframe.skiptranslate, iframe[id=":1.container"]');
-        banners.forEach(b => {
-          if (b.style.top !== '-9999px') {
-            b.style.cssText = 'position: absolute !important; top: -9999px !important; left: -9999px !important; opacity: 0 !important; width: 1px !important; height: 1px !important; pointer-events: none !important;';
-          }
-        });
-        
-        // 2. Remove any top spacing Google tries to force on the body or html
-        // IMPORTANT: Check before setting to prevent infinite MutationObserver loop!
-        if (document.body && document.body.style.top && document.body.style.top !== '0px') {
-            document.body.style.top = '0px';
-        }
-        if (document.documentElement && document.documentElement.style.top && document.documentElement.style.top !== '0px') {
-            document.documentElement.style.top = '0px';
-        }
-        
-        // 3. Hide all other floating popup elements without removing them
-        const popups = document.querySelectorAll('.goog-te-spinner-pos, .goog-te-balloon-frame, .VIpgJd-ZVi9od-aZ2wEe-wOHMyf, .VIpgJd-ZVi9od-aZ2wEe-wOHMyf-ti6hGc, #goog-gt-tt');
-        popups.forEach(el => {
-          if (el.style.display !== 'none') {
-            el.style.cssText = 'display: none !important; visibility: hidden !important; opacity: 0 !important; pointer-events: none !important;';
-          }
-        });
-      });
-
-      // Start observing as soon as body is available
-      window.addEventListener('DOMContentLoaded', () => {
-        observer.observe(document.body, { childList: true, attributes: true, subtree: true, attributeFilter: ['style', 'class'] });
-        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['style', 'class'] });
-      });
-    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

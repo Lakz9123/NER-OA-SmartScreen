@@ -23,11 +23,8 @@ import ProtectedRoute from './components/ProtectedRoute';
 import { syncOutbox, resetSyncingItems } from './services/syncService';
 import HealthWorkerLayout from './components/HealthWorkerLayout';
 import AdminLayout from './components/AdminLayout';
-import { useTranslation } from 'react-i18next';
 
 function App() {
-  const { i18n } = useTranslation();
-
   // Font families for translations are now handled globally via CSS fallbacks in tailwind.config.js
 
   useEffect(() => {

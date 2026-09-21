@@ -15,7 +15,7 @@ export default function ProtectedRoute({ allowedRoles }: { allowedRoles?: string
     try {
       const user = JSON.parse(userStr);
       role = getRole(user);
-    } catch (e) {
+    } catch (_e) {
       // ignore parse error
     }
   }

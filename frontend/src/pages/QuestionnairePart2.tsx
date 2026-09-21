@@ -16,7 +16,7 @@ export default function QuestionnairePart2() {
   const difficulties = [
     { value: 0, label: t('womac_none', 'None'), color: 'emerald' },
     { value: 1, label: t('womac_mild', 'Mild'), color: 'blue' },
-    { value: 2, label: t('womac_moderate', 'Moderate'), color: 'amber' },
+    { value: 2, label: t('womac_moderate', t('moderate')), color: 'amber' },
     { value: 3, label: t('womac_severe', 'Severe'), color: 'rose' },
   ];
   const navigate = useNavigate();

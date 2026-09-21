@@ -9,9 +9,19 @@ from ..schemas.token import Token
 from ..schemas.user import User as UserSchema, UserCreate
 from ..core.audit import log_audit
 
+from pydantic import BaseModel
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+
 router = APIRouter()
+limiter = Limiter(key_func=get_remote_address)
+
+class PasswordChange(BaseModel):
+    old_password: str
+    new_password: str
 
 @router.post("/login", response_model=Token)
+@limiter.limit("5/minute")
 def login_access_token(request: Request, db: Session = Depends(deps.get_db), form_data: OAuth2PasswordRequestForm = Depends()):
     user = db.query(User).filter(User.username == form_data.username).first()
     if not user or not security.verify_password(form_data.password, user.hashed_password):
@@ -63,3 +73,14 @@ def register_user(user_in: UserCreate, db: Session = Depends(deps.get_db)):
 @router.get("/me", response_model=UserSchema)
 def read_users_me(current_user: User = Depends(deps.get_current_active_user)):
     return current_user
+
+@router.post("/change-password")
+def change_password(password_data: PasswordChange, current_user: User = Depends(deps.get_current_active_user), db: Session = Depends(deps.get_db)):
+    if not security.verify_password(password_data.old_password, current_user.hashed_password):
+        raise HTTPException(status_code=400, detail="Incorrect old password")
+    if len(password_data.new_password) < 8:
+        raise HTTPException(status_code=400, detail="New password must be at least 8 characters long")
+    
+    current_user.hashed_password = security.get_password_hash(password_data.new_password)
+    db.commit()
+    return {"message": "Password changed successfully"}

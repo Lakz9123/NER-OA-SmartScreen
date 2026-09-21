@@ -4,11 +4,10 @@ import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
 import { db } from '../db/db';
 export default function PatientReport() {
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const { result } = location.state || { result: null };
-  const { t, i18n } = useTranslation();
-
   const [followupStatus, setFollowupStatus] = useState(result?.followup_status || 'pending');
   const [followupNote, setFollowupNote] = useState(result?.followup_note || '');
   const [saveStatus, setSaveStatus] = useState('');
@@ -62,8 +61,8 @@ export default function PatientReport() {
 
   const { risk_level, risk_score, pain_score, stiffness_score, function_score, knee_angle_left, knee_angle_right, knee_rom_left, knee_rom_right, cadence } = result;
   
-  const isHighRisk = risk_level === 'High';
-  const riskColor = isHighRisk ? 'text-rose-600 bg-rose-50 border-rose-200' : risk_level === 'Moderate' ? 'text-amber-600 bg-amber-50 border-amber-200' : 'text-emerald-600 bg-emerald-50 border-emerald-200';
+  const isHighRisk = risk_level === t('high');
+  const riskColor = isHighRisk ? 'text-rose-600 bg-rose-50 border-rose-200' : risk_level === t('moderate') ? 'text-amber-600 bg-amber-50 border-amber-200' : 'text-emerald-600 bg-emerald-50 border-emerald-200';
   
   const toggleLang = () => {
     i18n.changeLanguage(i18n.language === 'en' ? 'as' : 'en');
@@ -87,7 +86,7 @@ export default function PatientReport() {
               <Download className="h-4 w-4 mr-2" /> {t('download_pdf')}
             </button>
             <button onClick={handlePrint} className="flex items-center px-4 py-2 text-sm font-semibold text-white bg-teal-600 hover:bg-teal-700 rounded-xl transition-colors shadow-sm">
-              <Printer className="h-4 w-4 mr-2" /> {t('print_report', 'Print Report')}
+              <Printer className="h-4 w-4 mr-2" /> {t('print_report', t('print_report'))}
             </button>
           </div>
         </div>
@@ -105,7 +104,7 @@ export default function PatientReport() {
                 <Stethoscope className="h-8 w-8 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-black text-slate-900 tracking-tight">NER-OA SmartScreen</h1>
+                <h1 className="text-2xl font-black text-slate-900 tracking-tight">{t('app_name')}</h1>
                 <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">{t('report_title')}</p>
               </div>
             </div>
@@ -151,7 +150,7 @@ export default function PatientReport() {
             <h3 className="text-lg font-black text-slate-900 mb-4 border-b border-slate-100 pb-2">{t('followup_management', 'Follow-up Management')}</h3>
             <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 mb-4">
               <div className="flex-1">
-                <label className="block text-sm font-bold text-slate-500 mb-1">{t('status_label', 'Status')}</label>
+                <label className="block text-sm font-bold text-slate-500 mb-1">{t('status_label', t('status_label'))}</label>
                 <select 
                   value={followupStatus}
                   onChange={(e) => setFollowupStatus(e.target.value)}

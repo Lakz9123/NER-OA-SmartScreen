@@ -79,7 +79,7 @@ export default function CaptureReview() {
 
       navigate('/analysis', { state: { result: localResult } });
     } catch (err: any) {
-      setError(t('risk_compute_error', 'Failed to compute risk locally: ') + err.message);
+      setError(t('risk_compute_error', t('risk_compute_error')) + err.message);
     }
   };
 
@@ -91,11 +91,11 @@ export default function CaptureReview() {
             <X className="h-6 w-6" />
           </button>
           <div className="flex-1">
-            <h1 className="text-xl font-extrabold text-white tracking-tight">{t('telemetry_review', 'Telemetry Review')}</h1>
+            <h1 className="text-xl font-extrabold text-white tracking-tight">{t('telemetry_review', t('telemetry_review'))}</h1>
           </div>
           <div className="flex items-center space-x-2">
             <Cpu className="h-5 w-5 text-teal-500" />
-            <span className="text-xs font-bold tracking-widest text-teal-400 uppercase">{t('edge_computed', 'Edge Computed')}</span>
+            <span className="text-xs font-bold tracking-widest text-teal-400 uppercase">{t('edge_computed', t('edge_computed'))}</span>
           </div>
         </div>
       </header>
@@ -106,9 +106,9 @@ export default function CaptureReview() {
           <div className="inline-flex items-center justify-center p-5 bg-teal-900/40 border border-teal-500/30 text-teal-400 rounded-full mb-4 shadow-[0_0_30px_rgba(20,184,166,0.15)]">
             <Check className="h-8 w-8" strokeWidth={3} />
           </div>
-          <h2 className="text-2xl font-black text-white mb-2">{t('capture_successful', 'Capture Successful')}</h2>
+          <h2 className="text-2xl font-black text-white mb-2">{t('capture_successful', t('capture_successful'))}</h2>
           <p className="text-slate-400 font-medium max-w-sm mx-auto">
-            {t('capture_successful_desc', 'Kinematic data extracted locally. Video frames have been securely discarded.')}
+            {t('capture_successful_desc', t('capture_successful_desc'))}
           </p>
         </div>
 
@@ -116,20 +116,20 @@ export default function CaptureReview() {
           <div className="mb-6 bg-rose-950/50 border border-rose-900 p-4 rounded-2xl flex items-start animate-fade-in">
             <div className="h-2 w-2 rounded-full bg-rose-500 mt-2 mr-3 animate-pulse"></div>
             <p className="text-sm font-medium text-rose-300">
-              {error} <br/> <span className="text-rose-400/70 text-xs">{t('simulating_local_risk', 'Simulating local risk analysis...')}</span>
+              {error} <br/> <span className="text-rose-400/70 text-xs">{t('simulating_local_risk', t('simulating_local_risk'))}</span>
             </p>
           </div>
         )}
 
         <div className="bg-slate-900 rounded-3xl border border-slate-800 p-6 sm:p-8 mb-auto animate-fade-in-up-delay-1 shadow-xl">
           <h3 className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-6 flex items-center">
-            <Activity className="h-4 w-4 mr-2 text-teal-500" /> {t('indicative_measurements', 'Indicative Measurements')}
+            <Activity className="h-4 w-4 mr-2 text-teal-500" /> {t('indicative_measurements', t('indicative_measurements'))}
           </h3>
           
           <div className="space-y-4 font-mono">
             
             <div className="flex items-center justify-between p-4 bg-slate-950 rounded-2xl border border-slate-800">
-              <span className="text-slate-400 text-sm">{t('gait_speed', 'Gait Speed')}</span>
+              <span className="text-slate-400 text-sm">{t('gait_speed', t('gait_speed'))}</span>
               <div className="flex items-center">
                 <span className="text-white text-xl font-bold">{telemetryData.gait_speed}</span>
                 <span className="text-slate-500 text-xs ml-2">m/s</span>
@@ -137,7 +137,7 @@ export default function CaptureReview() {
             </div>
             
             <div className="flex items-center justify-between p-4 bg-slate-950 rounded-2xl border border-slate-800">
-              <span className="text-slate-400 text-sm">{t('step_length', 'Step Length')}</span>
+              <span className="text-slate-400 text-sm">{t('step_length', t('step_length'))}</span>
               <div className="flex items-center">
                 <span className="text-white text-xl font-bold">{telemetryData.step_length}</span>
                 <span className="text-slate-500 text-xs ml-2">m</span>
@@ -145,14 +145,14 @@ export default function CaptureReview() {
             </div>
 
             <div className="flex items-center justify-between p-4 bg-slate-950 rounded-2xl border border-slate-800">
-              <span className="text-slate-400 text-sm">{t('knee_flexion_angle', 'Knee Flexion Angle')}</span>
+              <span className="text-slate-400 text-sm">{t('knee_flexion_angle', t('knee_flexion_angle'))}</span>
               <div className="flex items-center">
                 <span className="text-white text-xl font-bold">{telemetryData.knee_flexion_angle}°</span>
               </div>
             </div>
 
             <div className="flex items-center justify-between p-4 bg-slate-950 rounded-2xl border border-slate-800">
-              <span className="text-slate-400 text-sm">{t('capture_quality', 'Capture Quality')}</span>
+              <span className="text-slate-400 text-sm">{t('capture_quality', t('capture_quality'))}</span>
               <div className="flex items-center">
                 <span className={`text-xl font-bold ${telemetryData.quality_score >= 80 ? 'text-teal-400' : telemetryData.quality_score >= 50 ? 'text-amber-400' : 'text-rose-400'}`}>
                   {telemetryData.quality_score || 100}
@@ -165,7 +165,7 @@ export default function CaptureReview() {
 
           <div className="mt-6 p-4 bg-slate-950/50 rounded-xl border border-slate-800">
             <p className="text-xs text-slate-400 font-medium leading-relaxed">
-              <span className="text-amber-500 font-bold">{t('note_label', 'Note:')} </span>{t('capture_review_note', 'Symmetry and angles are measured from a single-side 2D view and are indicative only. This is a screening aid, not a diagnosis.')}
+              <span className="text-amber-500 font-bold">{t('note_label', t('note_label'))} </span>{t('capture_review_note', t('capture_review_note'))}
             </p>
           </div>
         </div>
@@ -181,7 +181,7 @@ export default function CaptureReview() {
             ) : (
               <>
                 <UploadCloud className="h-5 w-5 mr-3 group-hover:animate-bounce" />
-                {t('analyze_risk_profile', 'Analyze Risk Profile')}
+                {t('analyze_risk_profile', t('analyze_risk_profile'))}
               </>
             )}
           </button>
@@ -192,7 +192,7 @@ export default function CaptureReview() {
             className="flex w-full items-center justify-center rounded-2xl bg-slate-900 py-4 px-4 text-sm font-bold text-slate-300 border border-slate-800 hover:bg-slate-800 focus:outline-none transition-colors"
           >
             <RefreshCw className="h-4 w-4 mr-2 opacity-70" />
-            {t('discard_retake', 'Discard & Retake Video')}
+            {t('discard_retake', t('discard_retake'))}
           </button>
         </div>
 

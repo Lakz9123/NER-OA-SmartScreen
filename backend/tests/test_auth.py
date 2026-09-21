@@ -43,3 +43,15 @@ def test_login_disabled(client, admin_token):
     sync_res = client.get("/sync/status", headers={"Authorization": f"Bearer {token}"})
     assert sync_res.status_code == 400
     assert "Inactive user" in sync_res.json()["detail"]
+
+def test_rate_limit(client):
+    # Make up to 10 requests, it should hit 429 eventually
+    hit_429 = False
+    for _ in range(10):
+        res = client.post("/auth/login", data={"username": "testadmin", "password": "wrong"})
+        if res.status_code == 429:
+            hit_429 = True
+            break
+        assert res.status_code in (401, 200, 422)
+    
+    assert hit_429, "Rate limit of 429 was never reached"

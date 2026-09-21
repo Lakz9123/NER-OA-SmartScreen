@@ -40,7 +40,7 @@ export default function QuestionnairePart3() {
     }
     
     return { value: bmi.toFixed(1), category, colorClass, gaugePercent };
-  }, [heightCm, weightKg]);
+  }, [heightCm, weightKg, t]);
 
   const handleNext = () => {
     navigate('/capture/setup', { 
@@ -68,7 +68,7 @@ export default function QuestionnairePart3() {
             <ChevronLeft className="h-6 w-6" />
           </button>
           <div className="flex-1">
-            <h1 className="text-xl font-extrabold text-slate-800 tracking-tight">{t('medical_history', 'Medical History')}</h1>
+            <h1 className="text-xl font-extrabold text-slate-800 tracking-tight">{t('medical_history', t('questionnaire_part2_title'))}</h1>
           </div>
           <div className="text-xs font-bold tracking-widest text-teal-600 uppercase">{t('step_3_of_3', 'Step 3 of 3')}</div>
         </div>

@@ -181,9 +181,8 @@ def test_sync_followup_update(client, normal_user_token, admin_token, db_session
     db_session.add(other_user)
     db_session.commit()
     
-    login_res = client.post("/auth/login", data={"username": "other_hw", "password": "pw"})
-    other_token = login_res.json()["access_token"]
-    
+    from app.core.security import create_access_token
+    other_token = create_access_token(subject=other_user.username)    
     payload["screenings"][0]["followup_status"] = "completed"
     response_other = client.post("/sync/batch", json=payload, headers={"Authorization": f"Bearer {other_token}"})
     assert response_other.json()["results"][1]["status"] == "failed"

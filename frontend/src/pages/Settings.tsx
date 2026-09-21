@@ -98,7 +98,7 @@ export default function Settings() {
             className="w-full flex items-center justify-center p-5 rounded-2xl bg-white border-2 border-rose-100 text-rose-600 font-bold hover:bg-rose-50 hover:border-rose-200 transition-colors group shadow-sm"
           >
             <LogOut className="h-5 w-5 mr-3 group-hover:-translate-x-1 transition-transform" />
-            {t('sign_out', 'Sign Out')}
+            {t('sign_out', t('sign_out'))}
           </button>
           
           <div className="text-center mt-8">

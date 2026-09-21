@@ -1,42 +1,25 @@
-from fastapi import FastAPI
+import sys
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 from .core.config import settings
 from .routers import auth, patients, screenings, sync, admin
-from .models.base import Base
-from .models.user import User
-from .core.database import engine, SessionLocal
-from .core.security import get_password_hash
 
-# Create all tables
-Base.metadata.create_all(bind=engine)
+if settings.ENV == "production":
+    if len(settings.SECRET_KEY) < 32 or settings.SECRET_KEY == "supersecretkey_please_change_in_production":
+        print("FATAL: Insecure SECRET_KEY in production mode.")
+        sys.exit(1)
+    if settings.CORS_ORIGINS == "*":
+        print("FATAL: Wildcard CORS_ORIGINS not allowed in production mode.")
+        sys.exit(1)
 
-# Auto-seed default users if DB is empty
-def seed_default_users():
-    db = SessionLocal()
-    try:
-        if not db.query(User).filter(User.username == "admin").first():
-            db.add(User(
-                username="admin",
-                email="admin@ner-oa.in",
-                full_name="System Admin",
-                role="admin",
-                hashed_password=get_password_hash("admin123")
-            ))
-        if not db.query(User).filter(User.username == "hw_asha").first():
-            db.add(User(
-                username="hw_asha",
-                email="asha@ner-oa.in",
-                full_name="Asha (Health Worker)",
-                role="health_worker",
-                hashed_password=get_password_hash("password123")
-            ))
-        db.commit()
-    finally:
-        db.close()
-
-seed_default_users()
+limiter = Limiter(key_func=get_remote_address)
 
 app = FastAPI(title=settings.PROJECT_NAME)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.add_middleware(
     CORSMiddleware,
@@ -55,3 +38,7 @@ app.include_router(admin.router, prefix="/admin", tags=["admin"])
 @app.get("/")
 def root():
     return {"message": "NER-OA SmartScreen API is running"}
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}

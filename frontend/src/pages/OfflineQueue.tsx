@@ -33,7 +33,7 @@ export default function OfflineQueue() {
         setSyncMessage(result.message);
         setSyncStatus('idle');
       }
-    } catch (e: any) {
+    } catch (_: any) {
       setSyncMessage(t('network_error', 'Network error. Try again later.'));
       setSyncStatus('idle');
     } finally {
@@ -54,7 +54,7 @@ export default function OfflineQueue() {
             <ChevronLeft className="h-6 w-6" />
           </button>
           <div className="flex-1">
-            <h1 className="text-xl font-extrabold text-slate-800 tracking-tight">{t('offline_queue', 'Offline Queue')}</h1>
+            <h1 className="text-xl font-extrabold text-slate-800 tracking-tight">{t('offline_queue', t('offline_queue'))}</h1>
           </div>
           <div className="flex items-center space-x-2 bg-amber-50 px-3 py-1.5 rounded-full border border-amber-200">
             <WifiOff className="h-4 w-4 text-amber-600" />
@@ -95,7 +95,7 @@ export default function OfflineQueue() {
             ) : (
               <>
                 <RefreshCw className="h-5 w-5 mr-3 group-hover:rotate-180 transition-transform duration-500" />
-                {t('sync_now', 'Sync Now')}
+                {t('sync_now', t('sync_now'))}
               </>
             )}
           </button>
@@ -149,7 +149,7 @@ export default function OfflineQueue() {
                   </div>
                   {item.status === 'failed' && (
                     <button onClick={() => retryItem(item.id)} className="ml-4 text-sm font-bold text-blue-600 hover:text-blue-800 underline">
-                      {t('retry', 'Retry')}
+                      {t('retry', t('retry'))}
                     </button>
                   )}
                 </div>

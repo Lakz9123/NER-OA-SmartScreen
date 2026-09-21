@@ -23,7 +23,7 @@ export default function Dashboard() {
   const loggedInUser = userStr ? JSON.parse(userStr) : null;
   const userScreenings = useLiveQuery(() => db.screenings.filter(s => !s.owner_id || s.owner_id === loggedInUser?.id).toArray()) || [];
   const pendingCount = useLiveQuery(() => db.outbox.filter(o => !o.owner_id || o.owner_id === loggedInUser?.id).count()) || 0;
-  const highRiskCount = userScreenings.filter(s => s.risk_level === 'High').length;
+  const highRiskCount = userScreenings.filter(s => s.risk_level === t('high')).length;
 
   return (
     <div className="font-sans">
@@ -51,7 +51,7 @@ export default function Dashboard() {
               className="mt-6 md:mt-0 group inline-flex items-center justify-center rounded-2xl bg-white px-6 py-4 text-base font-bold text-teal-700 shadow-lg hover:shadow-xl hover:scale-105 hover:bg-teal-50 transition-all duration-300"
             >
               <UserPlus className="h-5 w-5 mr-3 text-teal-600" />
-              {t('new_screening', 'New Screening')}
+              {t('new_screening', t('new_screening'))}
               <ArrowRight className="h-4 w-4 ml-2 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
             </button>
           </div>
@@ -64,7 +64,7 @@ export default function Dashboard() {
               <Activity className="h-6 w-6 text-blue-500" />
             </div>
             <div>
-              <p className="text-sm font-medium text-slate-500">{t('total_screenings', 'Total Screenings')}</p>
+              <p className="text-sm font-medium text-slate-500">{t('total_screenings', t('total_screenings'))}</p>
               <p className="text-2xl font-bold text-slate-800">{userScreenings.length}</p>
             </div>
           </div>
@@ -73,7 +73,7 @@ export default function Dashboard() {
               <Clock className="h-6 w-6 text-amber-500" />
             </div>
             <div>
-              <p className="text-sm font-medium text-slate-500">{t('pending_sync', 'Pending Sync')}</p>
+              <p className="text-sm font-medium text-slate-500">{t('pending_sync', t('pending_sync'))}</p>
               <p className="text-2xl font-bold text-slate-800">{pendingCount}</p>
             </div>
           </div>
@@ -82,7 +82,7 @@ export default function Dashboard() {
               <AlertTriangle className="h-6 w-6 text-rose-500" />
             </div>
             <div>
-              <p className="text-sm font-medium text-slate-500">{t('high_risk', 'High Risk')}</p>
+              <p className="text-sm font-medium text-slate-500">{t('high_risk', t('high_risk'))}</p>
               <p className="text-2xl font-bold text-slate-800">{highRiskCount}</p>
             </div>
           </div>
@@ -104,7 +104,7 @@ export default function Dashboard() {
                 <div className="mb-6 inline-flex rounded-2xl bg-teal-50 p-4 text-teal-600 group-hover:bg-teal-500 group-hover:text-white transition-colors duration-300 shadow-inner">
                   <UserPlus className="h-7 w-7" strokeWidth={2.5} />
                 </div>
-                <h3 className="text-lg font-bold text-slate-800 mb-2">{t('register_patient', 'Register Patient')}</h3>
+                <h3 className="text-lg font-bold text-slate-800 mb-2">{t('register_patient', t('register_button'))}</h3>
                 <p className="text-sm text-slate-500 font-medium leading-relaxed">{t('register_patient_desc', 'Enroll a new patient and begin the AI screening flow.')}</p>
               </div>
             </div>
@@ -136,7 +136,7 @@ export default function Dashboard() {
                 <div className="mb-6 inline-flex rounded-2xl bg-slate-100 p-4 text-slate-600 group-hover:bg-slate-700 group-hover:text-white transition-colors duration-300 shadow-inner">
                   <Settings className="h-7 w-7" strokeWidth={2.5} />
                 </div>
-                <h3 className="text-lg font-bold text-slate-800 mb-2">{t('settings', 'Settings')}</h3>
+                <h3 className="text-lg font-bold text-slate-800 mb-2">{t('settings', t('settings'))}</h3>
                 <p className="text-sm text-slate-500 font-medium leading-relaxed">{t('settings_desc', 'Manage your profile, language, and sync status.')}</p>
               </div>
             </div>

@@ -23,19 +23,19 @@ export default function AdminUsers() {
     fetchUsers();
   }, []);
 
-  if (loading) return <div className="p-8">{t('loading_users', 'Loading users...')}</div>;
+  if (loading) return <div className="p-8">{t('loading_users', t('loading_users'))}</div>;
 
   return (
     <div className="p-8 max-w-7xl mx-auto">
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center space-x-4">
           <button onClick={() => navigate('/admin/dashboard')} className="text-gray-500 hover:text-gray-700 font-medium">
-            &larr; {t('back', 'Back')}
+            &larr; {t('back', t('back'))}
           </button>
-          <h1 className="text-3xl font-bold text-gray-900">{t('user_management', 'User Management')}</h1>
+          <h1 className="text-3xl font-bold text-gray-900">{t('user_management', t('user_management'))}</h1>
         </div>
         <button className="bg-indigo-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-indigo-700 transition">
-          {t('add_user', '+ Add User')}
+          {t('add_user', t('add_user'))}
         </button>
       </div>
 
@@ -43,11 +43,11 @@ export default function AdminUsers() {
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('name_label', 'Name')}</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('role_label', 'Role')}</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('facility_label', 'Facility')}</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('status_label', 'Status')}</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('actions_label', 'Actions')}</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('name_label', t('name_label'))}</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('role_label', t('role_label'))}</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('facility_label', t('facility_label'))}</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('status_label', t('status_label'))}</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('actions_label', t('actions_label'))}</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
@@ -67,11 +67,11 @@ export default function AdminUsers() {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${user.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                    {user.is_active ? t('status_active', 'Active') : t('status_inactive', 'Inactive')}
+                    {user.is_active ? t('status_active', t('status_active')) : t('status_inactive', t('status_inactive'))}
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <button className="text-indigo-600 hover:text-indigo-900">{t('edit_btn', 'Edit')}</button>
+                  <button className="text-indigo-600 hover:text-indigo-900">{t('edit_btn', t('edit_btn'))}</button>
                 </td>
               </tr>
             ))}

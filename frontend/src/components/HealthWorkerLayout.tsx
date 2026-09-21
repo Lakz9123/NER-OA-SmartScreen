@@ -61,7 +61,7 @@ export default function HealthWorkerLayout() {
           className={`flex flex-col items-center p-2 rounded-xl transition-colors ${location.pathname.startsWith('/patient') ? 'text-teal-600' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}
         >
           <Users className="h-6 w-6 mb-1" />
-          <span className="text-[10px] font-bold">{t('nav_patients', 'Patients')}</span>
+          <span className="text-[10px] font-bold">{t('nav_patients', t('patients'))}</span>
         </button>
         <button 
           onClick={() => navigate('/register-patient')}
@@ -81,7 +81,7 @@ export default function HealthWorkerLayout() {
           className={`flex flex-col items-center p-2 rounded-xl transition-colors ${location.pathname === '/settings' ? 'text-teal-600' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}
         >
           <Settings className="h-6 w-6 mb-1" />
-          <span className="text-[10px] font-bold">{t('nav_settings', 'Settings')}</span>
+          <span className="text-[10px] font-bold">{t('nav_settings', t('settings'))}</span>
         </button>
       </nav>
     </div>

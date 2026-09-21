@@ -76,7 +76,7 @@ export default function Registration() {
           <button onClick={() => navigate('/dashboard')} className="mr-4 p-2 -ml-2 rounded-xl text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-all">
             <ChevronLeft className="h-6 w-6" />
           </button>
-          <h1 className="text-xl font-extrabold text-slate-800 tracking-tight">{t('register_patient', 'Register Patient')}</h1>
+          <h1 className="text-xl font-extrabold text-slate-800 tracking-tight">{t('register_patient', t('register_button'))}</h1>
         </div>
       </header>
 

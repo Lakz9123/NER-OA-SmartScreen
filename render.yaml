@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: ner-oa-backend
+    env: python
+    buildCommand: "cd backend && pip install -r requirements.txt && alembic upgrade head"
+    startCommand: "cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: ENVIRONMENT
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: SECRET_KEY
+        generateValue: true
+      - key: CORS_ORIGINS
+        value: "https://ner-oa-smartscreen.vercel.app"
+      - key: SEED_ADMIN_PASSWORD
+        sync: false
+      - key: SEED_WORKER_PASSWORD
+        sync: false

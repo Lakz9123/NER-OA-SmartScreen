@@ -171,7 +171,7 @@ export default function CaptureTracking() {
         
       } catch (err: any) {
         console.error(err);
-        setModelError(err.message || t('camera_ai_error', 'Failed to initialize camera or AI model.'));
+        setModelError(err.message || t('camera_ai_error', t('camera_ai_error')));
         setIsInitializing(false);
       }
     };
@@ -185,7 +185,7 @@ export default function CaptureTracking() {
         streamRef.current.getTracks().forEach(track => track.stop());
       }
     };
-  }, [retryTrigger]);
+  }, [retryTrigger, t, captureConfig]);
 
   const handleStartCaptureFlow = () => {
     setCaptureState('countdown');
@@ -209,6 +209,7 @@ export default function CaptureTracking() {
     
     const durationMs = captureConfig.RECORDING_DURATION_MS;
     setTimeRemaining(durationMs / 1000);
+    // eslint-disable-next-line react/purity
     const startMs = performance.now();
 
     const recordingInterval = setInterval(() => {
@@ -251,17 +252,23 @@ export default function CaptureTracking() {
   let debugCadence = 0;
   let debugReason = "Good capture quality.";
   let debugIsGood = true;
-  if (isDebug && captureState === 'recording' && trackerRef.current.rawFrames.length > 0) {
-    const q = assessCaptureQuality(trackerRef.current.rawFrames, trackerRef.current.timestamps);
+
+  // eslint-disable-next-line react/refs
+  const currentRawFrames = trackerRef.current?.rawFrames || [];
+  // eslint-disable-next-line react/refs
+  const currentTimestamps = trackerRef.current?.timestamps || [];
+
+  if (isDebug && captureState === 'recording' && currentRawFrames.length > 0) {
+    const q = assessCaptureQuality(currentRawFrames, currentTimestamps);
     debugScore = q.score;
-    debugMetrics = q.metrics;
     debugReason = q.reason;
     debugIsGood = q.is_good;
+
+    // eslint-disable-next-line react/refs
+    debugMetrics = trackerRef.current?.getMetrics() || {};
     
-    // Compute current cadence directly for debug display if possible, or extract from detectSteps if needed
-    // detectSteps is used inside assessCaptureQuality. Since metrics doesn't export cadence, let's just 
     // re-run detectSteps for debug UI (it's cheap).
-    const { cadence } = detectSteps(trackerRef.current.rawFrames, trackerRef.current.timestamps);
+    const { cadence } = detectSteps(currentRawFrames, currentTimestamps);
     debugCadence = cadence;
   }
 
@@ -280,14 +287,14 @@ export default function CaptureTracking() {
           <div className="bg-slate-900/50 backdrop-blur-md px-4 py-2 rounded-xl text-white border border-white/10 flex items-center shadow-lg">
             <div className={`w-2 h-2 rounded-full mr-2 ${captureState === 'recording' ? 'bg-rose-500 animate-pulse' : 'bg-slate-500'}`}></div>
             <span className="font-mono text-sm tracking-wider">
-              {captureState === 'idle' ? t('status_standby', 'STANDBY') : captureState === 'countdown' ? t('status_preparing', 'PREPARING') : captureState === 'recording' ? t('status_recording', 'RECORDING') : t('status_processing', 'PROCESSING')}
+              {captureState === 'idle' ? t('status_standby', t('status_standby')) : captureState === 'countdown' ? t('status_preparing', t('status_preparing')) : captureState === 'recording' ? t('status_recording', t('status_recording')) : t('status_processing', t('status_processing'))}
             </span>
           </div>
           
           {captureState === 'recording' && (
             <div className="bg-slate-900/50 backdrop-blur-md p-3 rounded-xl border border-teal-500/30 w-32 flex flex-col items-center">
               <Activity className="h-5 w-5 text-teal-400 mb-1" />
-              <span className="font-mono text-teal-400 text-xs">{t('time_left', 'Time Left')}</span>
+              <span className="font-mono text-teal-400 text-xs">{t('time_left', t('time_left'))}</span>
               <span className="font-mono text-white text-lg font-bold">{timeRemaining}s</span>
             </div>
           )}
@@ -300,20 +307,20 @@ export default function CaptureTracking() {
         {isInitializing && (
           <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-slate-950/80 backdrop-blur-sm">
             <Scan className="h-16 w-16 text-teal-500 animate-pulse-glow mb-4" />
-            <p className="text-teal-400 font-mono tracking-widest text-sm">{t('loading_edge_ai', 'LOADING EDGE AI MODEL...')}</p>
+            <p className="text-teal-400 font-mono tracking-widest text-sm">{t('loading_edge_ai', t('loading_edge_ai'))}</p>
           </div>
         )}
 
         {modelError && (
           <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-slate-950/90 p-6 text-center">
             <AlertTriangle className="h-16 w-16 text-rose-500 mb-4" />
-            <p className="text-white font-bold text-lg mb-2">{t('system_error', 'System Error')}</p>
+            <p className="text-white font-bold text-lg mb-2">{t('system_error', t('system_error'))}</p>
             <p className="text-slate-400 max-w-md mb-6">{modelError}</p>
             <button 
               onClick={() => { setModelError(''); setIsInitializing(true); setRetryTrigger(prev => prev + 1); }}
               className="flex items-center px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition-colors border border-slate-700"
             >
-              <RefreshCw className="h-4 w-4 mr-2" /> {t('retry_connection', 'Retry Connection')}
+              <RefreshCw className="h-4 w-4 mr-2" /> {t('retry_connection', t('retry_connection'))}
             </button>
           </div>
         )}
@@ -358,17 +365,17 @@ export default function CaptureTracking() {
           <div className="absolute bottom-10 left-0 w-full flex flex-col items-center space-y-2 z-20 pointer-events-none">
             {showMoveBack && (
               <div className="bg-rose-600/90 text-white px-6 py-2 rounded-full font-bold shadow-lg animate-pulse">
-                {t('move_back_warning', 'Move Back! (Subject out of frame)')}
+                {t('move_back_warning', t('move_back_warning'))}
               </div>
             )}
             {showLegsCutOff && (
               <div className="bg-amber-600/90 text-white px-6 py-2 rounded-full font-bold shadow-lg">
-                {t('legs_cutoff_warning', 'Legs cut off!')}
+                {t('legs_cutoff_warning', t('legs_cutoff_warning'))}
               </div>
             )}
             {!showMoveBack && !showLegsCutOff && uiStatus.hipsVisible && (
               <div className="bg-teal-600/80 text-white px-6 py-2 rounded-full font-bold shadow-lg">
-                {t('subject_in_frame', 'Subject in Frame')}
+                {t('subject_in_frame', t('subject_in_frame'))}
               </div>
             )}
           </div>
@@ -412,12 +419,12 @@ export default function CaptureTracking() {
         ) : (
           <div className="w-full max-w-md text-center">
             <p className="text-teal-400 font-mono font-bold animate-pulse">
-              {captureState === 'countdown' ? t('status_preparing_dots', 'PREPARING...') : captureState === 'processing' ? t('status_processing_data', 'PROCESSING DATA...') : t('status_recording_dots', 'RECORDING...')}
+              {captureState === 'countdown' ? t('status_preparing_dots', t('status_preparing_dots')) : captureState === 'processing' ? t('status_processing_data', t('status_processing_data')) : t('status_recording_dots', t('status_recording_dots'))}
             </p>
           </div>
         )}
         <p className="text-slate-500 text-sm mt-6 font-medium text-center">
-          {captureState === 'idle' ? t('capture_instruction_idle', 'Ask patient to walk. Tap to begin countdown.') : t('capture_instruction_recording', 'Patient should walk side-to-side across the screen.')}
+          {captureState === 'idle' ? t('capture_instruction_idle', t('capture_instruction_idle')) : t('capture_instruction_recording', t('capture_instruction_recording'))}
         </p>
       </div>
 
