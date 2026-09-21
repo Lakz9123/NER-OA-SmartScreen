@@ -31,7 +31,9 @@
         // 1. Hide the top iframe banner without removing it from DOM
         const banners = document.querySelectorAll('.skiptranslate > iframe.skiptranslate, iframe[id=":1.container"]');
         banners.forEach(b => {
-          b.style.cssText = 'display: none !important; visibility: hidden !important; opacity: 0 !important; width: 0 !important; height: 0 !important;';
+          if (b.style.display !== 'none') {
+            b.style.cssText = 'display: none !important; visibility: hidden !important; opacity: 0 !important; width: 0 !important; height: 0 !important;';
+          }
         });
         
         // 2. Remove any top spacing Google tries to force on the body or html
