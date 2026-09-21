@@ -5,7 +5,7 @@ const LANGUAGES = [
   { code: 'en', label: 'English', isDraft: false },
   { code: 'hi', label: 'हिन्दी', isDraft: false },
   { code: 'as', label: 'অসমীয়া', isDraft: false },
-  { code: 'mni', label: 'ꯃꯤꯇꯩ ꯃꯌꯦꯛ', isDraft: false }
+  { code: 'mni-Mtei', label: 'ꯃꯤꯇꯩ ꯃꯌꯦꯛ', isDraft: false }
 ];
 
 export default function LanguageSwitcher() {
