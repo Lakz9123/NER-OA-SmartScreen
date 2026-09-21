@@ -22,7 +22,7 @@ export default {
         }
       },
       fontFamily: {
-        sans: ['Outfit', 'sans-serif'],
+        sans: ['Outfit', '"Noto Sans Devanagari"', '"Noto Sans Bengali"', '"Noto Sans Meetei Mayek"', 'sans-serif'],
         hi: ['"Noto Sans Devanagari"', 'sans-serif'],
         as: ['"Noto Sans Bengali"', 'sans-serif'],
         mni: ['"Noto Sans Meetei Mayek"', 'sans-serif'],

@@ -28,14 +28,7 @@ import { useTranslation } from 'react-i18next';
 function App() {
   const { i18n } = useTranslation();
 
-  useEffect(() => {
-    document.body.classList.remove('font-sans', 'font-hi', 'font-as', 'font-mni');
-    if (['hi', 'as', 'mni'].includes(i18n.language)) {
-      document.body.classList.add(`font-${i18n.language}`);
-    } else {
-      document.body.classList.add('font-sans');
-    }
-  }, [i18n.language]);
+  // Font families for translations are now handled globally via CSS fallbacks in tailwind.config.js
 
   useEffect(() => {
     // Reset stuck items on startup
