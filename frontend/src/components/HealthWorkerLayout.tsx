@@ -20,16 +20,16 @@ export default function HealthWorkerLayout() {
       {/* Top Bar */}
       <header className="bg-white/80 backdrop-blur-md border-b border-slate-200 sticky top-0 z-20">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center space-x-3">
-            <div className="bg-gradient-to-tr from-teal-600 to-emerald-400 text-white h-9 w-9 rounded-full flex items-center justify-center font-bold text-sm shadow-md">
+          <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 pr-2">
+            <div className="shrink-0 bg-gradient-to-tr from-teal-600 to-emerald-400 text-white h-8 w-8 sm:h-9 sm:w-9 rounded-full flex items-center justify-center font-bold text-xs sm:text-sm shadow-md">
               HW
             </div>
-            <div>
-              <span className="block text-sm font-bold text-slate-800 leading-tight">{user ? user.username : '...'}</span>
-              <span className="block text-xs text-slate-500 font-medium">{user?.facility || t('field_worker', 'Field Worker')}</span>
+            <div className="min-w-0">
+              <span className="block text-sm font-bold text-slate-800 leading-tight truncate">{user ? user.username : '...'}</span>
+              <span className="hidden sm:block text-xs text-slate-500 font-medium truncate">{user?.facility || t('field_worker', 'Field Worker')}</span>
             </div>
           </div>
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 sm:space-x-4 shrink-0">
             <LanguageSwitcher />
             <div className="hidden sm:flex items-center space-x-2">
               <span className="flex h-3 w-3">
