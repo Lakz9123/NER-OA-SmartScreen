@@ -52,32 +52,47 @@ def on_startup():
     # Create all tables (safe no-op if they already exist)
     Base.metadata.create_all(bind=engine)
 
-    # Seed admin if no users exist
+    # Seed or update admin and worker users
     db = SessionLocal()
     try:
-        if db.query(UserModel).count() == 0:
-            admin_password = settings.SEED_ADMIN_PASSWORD or secrets.token_urlsafe(16)
-            worker_password = settings.SEED_WORKER_PASSWORD or secrets.token_urlsafe(16)
-            print(f"[SEED] No users found. Creating default users.")
-            print(f"[SEED] Admin password: {admin_password}")
-            print(f"[SEED] Worker password: {worker_password}")
+        admin_password = settings.SEED_ADMIN_PASSWORD
+        worker_password = settings.SEED_WORKER_PASSWORD
+        
+        # Admin
+        admin_user = db.query(UserModel).filter_by(username="admin").first()
+        if not admin_user:
+            admin_pass = admin_password or secrets.token_urlsafe(16)
+            print(f"[SEED] Creating admin user. Password: {admin_pass}")
             db.add(UserModel(
                 username="admin",
                 email="admin@ner-oa.local",
-                hashed_password=get_password_hash(admin_password),
+                hashed_password=get_password_hash(admin_pass),
                 full_name="Administrator",
                 role="admin",
                 is_active=True,
             ))
+        elif admin_password:
+            print(f"[SEED] Updating admin password from environment variable.")
+            admin_user.hashed_password = get_password_hash(admin_password)
+
+        # Worker
+        worker_user = db.query(UserModel).filter_by(username="worker").first()
+        if not worker_user:
+            worker_pass = worker_password or secrets.token_urlsafe(16)
+            print(f"[SEED] Creating worker user. Password: {worker_pass}")
             db.add(UserModel(
                 username="worker",
                 email="worker@ner-oa.local",
-                hashed_password=get_password_hash(worker_password),
+                hashed_password=get_password_hash(worker_pass),
                 full_name="Health Worker",
                 role="health_worker",
                 is_active=True,
             ))
-            db.commit()
+        elif worker_password:
+            print(f"[SEED] Updating worker password from environment variable.")
+            worker_user.hashed_password = get_password_hash(worker_password)
+
+        db.commit()
     finally:
         db.close()
 
