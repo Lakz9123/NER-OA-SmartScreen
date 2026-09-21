@@ -7,7 +7,11 @@ from slowapi.errors import RateLimitExceeded
 from .core.config import settings
 from .routers import auth, patients, screenings, sync, admin
 
-if settings.ENV == "production":
+# Accept both ENV and ENVIRONMENT variable names for flexibility
+import os
+_env = settings.ENV or os.getenv("ENVIRONMENT", "development")
+
+if _env == "production":
     if len(settings.SECRET_KEY) < 32 or settings.SECRET_KEY == "supersecretkey_please_change_in_production":
         print("FATAL: Insecure SECRET_KEY in production mode.")
         sys.exit(1)
@@ -34,6 +38,48 @@ app.include_router(patients.router, prefix="/patients", tags=["patients"])
 app.include_router(screenings.router, prefix="/screenings", tags=["screenings"])
 app.include_router(sync.router, prefix="/sync", tags=["sync"])
 app.include_router(admin.router, prefix="/admin", tags=["admin"])
+
+@app.on_event("startup")
+def on_startup():
+    """Create tables and seed admin user on first startup."""
+    from .models.base import Base
+    from .models import user, patient, screening  # noqa: ensure models are registered
+    from .core.database import engine, SessionLocal
+    from .core.security import get_password_hash
+    from .models.user import User as UserModel
+    import secrets
+
+    # Create all tables (safe no-op if they already exist)
+    Base.metadata.create_all(bind=engine)
+
+    # Seed admin if no users exist
+    db = SessionLocal()
+    try:
+        if db.query(UserModel).count() == 0:
+            admin_password = settings.SEED_ADMIN_PASSWORD or secrets.token_urlsafe(16)
+            worker_password = settings.SEED_WORKER_PASSWORD or secrets.token_urlsafe(16)
+            print(f"[SEED] No users found. Creating default users.")
+            print(f"[SEED] Admin password: {admin_password}")
+            print(f"[SEED] Worker password: {worker_password}")
+            db.add(UserModel(
+                username="admin",
+                email="admin@ner-oa.local",
+                hashed_password=get_password_hash(admin_password),
+                full_name="Administrator",
+                role="admin",
+                is_active=True,
+            ))
+            db.add(UserModel(
+                username="worker",
+                email="worker@ner-oa.local",
+                hashed_password=get_password_hash(worker_password),
+                full_name="Health Worker",
+                role="health_worker",
+                is_active=True,
+            ))
+            db.commit()
+    finally:
+        db.close()
 
 @app.get("/")
 def root():
