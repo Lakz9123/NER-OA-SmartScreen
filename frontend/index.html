@@ -25,20 +25,24 @@
     </script>
     <script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 
-    <!-- Clean up Google Translate UI forcefully -->
+    <!-- Clean up Google Translate UI forcefully without breaking the engine -->
     <script>
       const observer = new MutationObserver(() => {
-        // 1. Remove the top iframe banner entirely from DOM
+        // 1. Hide the top iframe banner without removing it from DOM
         const banners = document.querySelectorAll('.skiptranslate > iframe.skiptranslate, iframe[id=":1.container"]');
-        banners.forEach(b => b.remove());
+        banners.forEach(b => {
+          b.style.cssText = 'display: none !important; visibility: hidden !important; opacity: 0 !important; width: 0 !important; height: 0 !important;';
+        });
         
         // 2. Remove any top spacing Google tries to force on the body or html
         if (document.body && document.body.style.top) document.body.style.top = '0px';
         if (document.documentElement && document.documentElement.style.top) document.documentElement.style.top = '0px';
         
-        // 3. Remove all other floating popup elements
+        // 3. Hide all other floating popup elements without removing them
         const popups = document.querySelectorAll('.goog-te-spinner-pos, .goog-te-balloon-frame, .VIpgJd-ZVi9od-aZ2wEe-wOHMyf, .VIpgJd-ZVi9od-aZ2wEe-wOHMyf-ti6hGc, #goog-gt-tt');
-        popups.forEach(el => el.remove());
+        popups.forEach(el => {
+          el.style.cssText = 'display: none !important; visibility: hidden !important; opacity: 0 !important; pointer-events: none !important;';
+        });
       });
 
       // Start observing as soon as body is available
