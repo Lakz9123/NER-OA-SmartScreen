@@ -163,7 +163,7 @@ export default function Login() {
           </div>
           
           <p className="mt-8 text-center text-xs font-semibold text-slate-400 uppercase tracking-widest">
-            {t('copyright', 'NER-OA SmartScreen © 2024')}
+            {t('copyright', 'NER-OA SmartScreen © 2026')}
           </p>
         </div>
       </div>

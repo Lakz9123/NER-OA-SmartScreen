@@ -23,7 +23,6 @@ import ProtectedRoute from './components/ProtectedRoute';
 import { syncOutbox, resetSyncingItems } from './services/syncService';
 import HealthWorkerLayout from './components/HealthWorkerLayout';
 import AdminLayout from './components/AdminLayout';
-import RoleBadge from './components/RoleBadge';
 import { useTranslation } from 'react-i18next';
 
 function App() {
@@ -63,7 +62,6 @@ function App() {
 
   return (
     <Router>
-      <RoleBadge />
       <div className="min-h-screen bg-gray-50">
         <Routes>
           {/* 1. Login Screen */}

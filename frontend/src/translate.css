@@ -4,13 +4,21 @@
 }
 
 /* Hide the Google Translate banner at the top */
-.skiptranslate iframe {
+.skiptranslate iframe,
+.goog-te-banner-frame.skiptranslate, 
+.goog-te-gadget-icon, 
+.goog-te-gadget-simple, 
+.goog-te-gadget, 
+#goog-gt-tt, 
+.goog-te-balloon-frame,
+.VIpgJd-ZVi9od-aZ2wEe-wOHMyf,
+.VIpgJd-ZVi9od-aZ2wEe-wOHMyf-ti6hGc {
   display: none !important;
   visibility: hidden !important;
 }
 
 /* Prevent the body from being pushed down by the invisible banner */
-body {
+body, html {
   top: 0 !important;
 }
 
