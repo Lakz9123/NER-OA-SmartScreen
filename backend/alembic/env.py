@@ -16,7 +16,13 @@ from app.core.config import settings
 # access to the values within the .ini file in use.
 config = context.config
 
-config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+config.set_main_option(
+    "sqlalchemy.url",
+    settings.DATABASE_URL.replace("postgres://", "postgresql://", 1)
+    if settings.DATABASE_URL.startswith("postgres://")
+    else settings.DATABASE_URL
+)
+
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
